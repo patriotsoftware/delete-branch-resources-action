@@ -52,12 +52,14 @@ runs:
           dotnet tool install --global dotnet-sonarscanner --version {{inputs.sonar-tool-version}}
           echo "Sonar Scanner now installed."
         fi
+      shell: bash
         
     - name: Start Containerized Dependencies
       if: inputs.use-dependencies
       run: |
         echo "Setting up docker compose"
         docker-compose -f {{inputs.docker-compose-file-path}} up -d
+      shell: bash
 
     - name: Sonarqube Run
       env:
@@ -65,6 +67,7 @@ runs:
       run: |
         export PATH=$PATH:$HOME/.dotnet/tools
         dotnet sonarscanner begin /k:"${{ inputs.sonar-project-name }}" /d:sonar.login=${{ inputs.sonar-token }} /d:sonar.host.url=https://sonar.dev-internal.patriotsoftware.com /d:sonar.cs.vscoveragexml.reportsPaths=test/**/TestResults/**/*.xml
+      shell: bash
 
     - name: Run Tests
       env:
@@ -76,6 +79,7 @@ runs:
         echo "running dotnet tests....."
         export PATH=$PATH:$HOME/.dotnet/tools
         dotnet test --logger 'trx;LogFileName=test-results.trx' --configuration Release --verbosity minimal --collect "Code Coverage" --filter TestCategory!='Smoke' --settings:test/local.runsettings
+      shell: bash
 
     - name: Sonarqube end
       run: |
@@ -84,6 +88,7 @@ runs:
         dotnet sonarscanner end /d:sonar.login="${{inputs.sonar-token }}"
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
+      shell: bash
 
     - name: Output Docker Container Logs
       uses: jwalton/gh-docker-logs@v2
@@ -102,3 +107,4 @@ runs:
       run: |
         echo "Stopping Docker Containers"
         docker-compose -f {{.inputs.docker-compose-file-path}} down -v --remove-orphans
+      shell: bash
