@@ -1,111 +1,104 @@
 name: 'Project Validation'
 description: 'Run Sonar and Tests to Validate Quality'
+
 inputs:
   sonar-project-name:
     description: 'Project name in Sonar'
     required: true
     default: ''
-    type: string
   sonar-tool-version:
     description: 'Sonar tool version'
     required: false
     default: '5.8.0'
-    type: string
   use-dependencies:
     description: 'Use Docker to run dependencies.'
     required: false
     default: 'false'
-    type: boolean
   docker-compose-file-path:
     description: 'Path to docker compose file to start dependencies'
     required: false
     default: 'docker-compose/test-dependencies-compose.yml'
-    type: string
   github-token:
     description: 'Github Token'
     required: true
-    type: string
   sonar-token:
     description: 'Sonar Token'
     required: true
-    type: string
   aws-access-key-id:
     description: 'AWS Access Key ID'
     required: true
-    type: string
   aws-secret-access-key:
     description: 'AWS Secret Access Key'
     required: true
-    type: string
     
-  runs:
-    using: 'composite'
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
+runs:
+  using: 'composite'
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
 
-      - name: Java Install
-        uses: actions/setup-java@v1
-        with:
-          java-version: '11'
+    - name: Java Install
+      uses: actions/setup-java@v1
+      with:
+        java-version: '11'
 
-      - name: Install dotnet Tools
-        run: |
-          if dotnet tool list -g | grep -q sonarscanner; then
-            echo "Sonar Scanner Already Installed"
-          else
-            dotnet tool install --global dotnet-sonarscanner --version {{inputs.sonar-tool-version}}
-            echo "Sonar Scanner now installed."
-          fi
-          
-      - name: Start Containerized Dependencies
-        if: inputs.use-dependencies
-        run: |
-          echo "Setting up docker compose"
-          docker-compose -f {{inputs.docker-compose-file-path}} up -d
+    - name: Install dotnet Tools
+      run: |
+        if dotnet tool list -g | grep -q sonarscanner; then
+          echo "Sonar Scanner Already Installed"
+        else
+          dotnet tool install --global dotnet-sonarscanner --version {{inputs.sonar-tool-version}}
+          echo "Sonar Scanner now installed."
+        fi
+        
+    - name: Start Containerized Dependencies
+      if: inputs.use-dependencies
+      run: |
+        echo "Setting up docker compose"
+        docker-compose -f {{inputs.docker-compose-file-path}} up -d
 
-      - name: Sonarqube Run
-        env:
-          GITHUB_TOKEN: ${{ inputs.github-token }} 
-        run: |
-          export PATH=$PATH:$HOME/.dotnet/tools
-          dotnet sonarscanner begin /k:"${{ inputs.sonar-project-name }}" /d:sonar.login=${{ inputs.sonar-token }} /d:sonar.host.url=https://sonar.dev-internal.patriotsoftware.com /d:sonar.cs.vscoveragexml.reportsPaths=test/**/TestResults/**/*.xml
+    - name: Sonarqube Run
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }} 
+      run: |
+        export PATH=$PATH:$HOME/.dotnet/tools
+        dotnet sonarscanner begin /k:"${{ inputs.sonar-project-name }}" /d:sonar.login=${{ inputs.sonar-token }} /d:sonar.host.url=https://sonar.dev-internal.patriotsoftware.com /d:sonar.cs.vscoveragexml.reportsPaths=test/**/TestResults/**/*.xml
 
-      - name: Run Tests
-        env:
-          AWS_ACCOUNT_ID: '305628290583'
-          AWS_REGION: 'us-east-1'
-          AWS_ACCESS_KEY_ID: ${{ inputs.aws-access-key-id }}
-          AWS_SECRET_ACCESS_KEY: ${{ inputs.aws-secret-access-key }}
-        run: |
-          echo "running dotnet tests....."
-          export PATH=$PATH:$HOME/.dotnet/tools
-          dotnet test --logger 'trx;LogFileName=test-results.trx' --configuration Release --verbosity minimal --collect "Code Coverage" --filter TestCategory!='Smoke' --settings:test/local.runsettings
+    - name: Run Tests
+      env:
+        AWS_ACCOUNT_ID: '305628290583'
+        AWS_REGION: 'us-east-1'
+        AWS_ACCESS_KEY_ID: ${{ inputs.aws-access-key-id }}
+        AWS_SECRET_ACCESS_KEY: ${{ inputs.aws-secret-access-key }}
+      run: |
+        echo "running dotnet tests....."
+        export PATH=$PATH:$HOME/.dotnet/tools
+        dotnet test --logger 'trx;LogFileName=test-results.trx' --configuration Release --verbosity minimal --collect "Code Coverage" --filter TestCategory!='Smoke' --settings:test/local.runsettings
 
-      - name: Sonarqube end
-        run: |
-          export PATH=$PATH:$HOME/.dotnet/tools
-          . ~/.bashrc
-          dotnet sonarscanner end /d:sonar.login="${{inputs.sonar-token }}"
-        env:
-          GITHUB_TOKEN: ${{ inputs.github-token }}
+    - name: Sonarqube end
+      run: |
+        export PATH=$PATH:$HOME/.dotnet/tools
+        . ~/.bashrc
+        dotnet sonarscanner end /d:sonar.login="${{inputs.sonar-token }}"
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
 
-      - name: Output Docker Container Logs
-        uses: jwalton/gh-docker-logs@v2
-        if: inputs.use-dependencies && always()
+    - name: Output Docker Container Logs
+      uses: jwalton/gh-docker-logs@v2
+      if: inputs.use-dependencies && always()
 
-      - name: Test Report
-        uses: dorny/test-reporter@v1
-        if: always()
-        with:
-          name: Test Results            
-          path: test/**/TestResults/**/test-results.trx
-          reporter: dotnet-trx
+    - name: Test Report
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: Test Results            
+        path: test/**/TestResults/**/test-results.trx
+        reporter: dotnet-trx
 
-      - name: Stop Containerized Dependencies
-        if: inputs.use-dependencies && always()
-        run: |
-          echo "Stopping Docker Containers"
-          docker-compose -f {{.inputs.docker-compose-file-path}} down -v --remove-orphans
+    - name: Stop Containerized Dependencies
+      if: inputs.use-dependencies && always()
+      run: |
+        echo "Stopping Docker Containers"
+        docker-compose -f {{.inputs.docker-compose-file-path}} down -v --remove-orphans
