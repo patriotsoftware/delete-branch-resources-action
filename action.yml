@@ -106,5 +106,5 @@ runs:
       if: inputs.use-dependencies && always()
       run: |
         echo "Stopping Docker Containers"
-        docker-compose -f ${{.inputs.docker-compose-file-path}} down -v --remove-orphans
+        docker-compose -f ${{inputs.docker-compose-file-path}} down -v --remove-orphans
       shell: bash
