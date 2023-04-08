@@ -42,3 +42,21 @@ started. This is off by default.
 This parameter tells the action where to find the 
 Docker compose file that defines the dependencies
 needed. Default is 'docker-compose/test-dependencies-compose.yml'
+
+## Sample Use
+
+```
+project-validation:
+  needs: [ alert-action-started ]
+  name: "Validate Project Quality"
+  runs-on: psidev-linux
+  steps:
+  - uses: patriotsoftware/project-validation-action@v1
+    with:
+      sonar-project-name: SynergyDataSystems_PatriotSoftware.Time
+      sonar-token: ${{ secrets.SONAR_TOKEN }}
+      use-dependencies: true
+      github-token: ${{ secrets.GITHUB_TOKEN }}
+      aws-access-key-id: ${{ secrets.DEV_AWS_ACCESS_KEY_ID }}
+      aws-secret-access-key: ${{ secrets.DEV_AWS_SECRET_ACCESS_KEY }}
+```
