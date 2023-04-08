@@ -20,6 +20,18 @@ The Sonar tool version we install for this run. Default
 is 5.8.0 but this param will allow one to override if
 needed.
 
+#### 'sonar-token' (required)
+The secret Sonar token for authenticating with Sonar.
+
+#### 'github-token' (required)
+The secret Github token for authenticating with Github.
+
+#### 'aws-access-key-id' (required)
+The AWS access key id, should always be for dev.
+
+#### 'aws-secret-access-key' (required)
+The AWS secret access key, should always be for dev.
+
 #### 'use-dependencies' (optional)
 Tests can be ran with dependencies if needed. Dependencies
 can be defined in a docker compose file. And this switch

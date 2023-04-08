@@ -21,7 +21,23 @@ inputs:
     required: false
     default: 'docker-compose/test-dependencies-compose.yml'
     type: string
-  
+  github-token:
+    description: 'Github Token'
+    required: true
+    type: string
+  sonar-token:
+    description: 'Sonar Token'
+    required: true
+    type: string
+  aws-access-key-id:
+    description: 'AWS Access Key ID'
+    required: true
+    type: string
+  aws-secret-access-key:
+    description: 'AWS Secret Access Key'
+    required: true
+    type: string
+    
   runs:
     using: 'composite'
     steps:
@@ -48,21 +64,21 @@ inputs:
         if: inputs.use-dependencies
         run: |
           echo "Setting up docker compose"
-          docker-compose -f {{.inputs.docker-compose-file-path}} up -d
+          docker-compose -f {{inputs.docker-compose-file-path}} up -d
 
       - name: Sonarqube Run
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+          GITHUB_TOKEN: ${{ inputs.github-token }} 
         run: |
           export PATH=$PATH:$HOME/.dotnet/tools
-          dotnet sonarscanner begin /k:"${{ inputs.sonar-project-name }}" /d:sonar.login=${{ secrets.SONAR_TOKEN }} /d:sonar.host.url=https://sonar.dev-internal.patriotsoftware.com /d:sonar.cs.vscoveragexml.reportsPaths=test/**/TestResults/**/*.xml
+          dotnet sonarscanner begin /k:"${{ inputs.sonar-project-name }}" /d:sonar.login=${{ inputs.sonar-token }} /d:sonar.host.url=https://sonar.dev-internal.patriotsoftware.com /d:sonar.cs.vscoveragexml.reportsPaths=test/**/TestResults/**/*.xml
 
       - name: Run Tests
         env:
           AWS_ACCOUNT_ID: '305628290583'
           AWS_REGION: 'us-east-1'
-          AWS_ACCESS_KEY_ID: ${{ secrets.DEV_AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.DEV_AWS_SECRET_ACCESS_KEY }}
+          AWS_ACCESS_KEY_ID: ${{ inputs.aws-access-key-id }}
+          AWS_SECRET_ACCESS_KEY: ${{ inputs.aws-secret-access-key }}
         run: |
           echo "running dotnet tests....."
           export PATH=$PATH:$HOME/.dotnet/tools
@@ -72,9 +88,9 @@ inputs:
         run: |
           export PATH=$PATH:$HOME/.dotnet/tools
           . ~/.bashrc
-          dotnet sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
+          dotnet sonarscanner end /d:sonar.login="${{inputs.sonar-token }}"
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ inputs.github-token }}
 
       - name: Output Docker Container Logs
         uses: jwalton/gh-docker-logs@v2
