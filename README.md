@@ -55,7 +55,7 @@ project-validation:
     with:
       sonar-project-name: SynergyDataSystems_PatriotSoftware.Time
       sonar-token: ${{ secrets.SONAR_TOKEN }}
-      use-dependencies: true
+      use-dependencies: 'true'
       github-token: ${{ secrets.GITHUB_TOKEN }}
       aws-access-key-id: ${{ secrets.DEV_AWS_ACCESS_KEY_ID }}
       aws-secret-access-key: ${{ secrets.DEV_AWS_SECRET_ACCESS_KEY }}
