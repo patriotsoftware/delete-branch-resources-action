@@ -46,7 +46,7 @@ runs:
       shell: bash
         
     - name: Start Containerized Dependencies
-      if: inputs.use-dependencies
+      if: inputs.use-dependencies == 'true'
       run: |
         echo "Setting up docker compose"
         docker-compose -f ${{inputs.docker-compose-file-path}} up -d
@@ -83,7 +83,7 @@ runs:
 
     - name: Output Docker Container Logs
       uses: jwalton/gh-docker-logs@v2
-      if: inputs.use-dependencies && always()
+      if: inputs.use-dependencies == 'true' && always()
 
     - name: Test Report
       uses: dorny/test-reporter@v1
@@ -94,7 +94,7 @@ runs:
         reporter: dotnet-trx
 
     - name: Stop Containerized Dependencies
-      if: inputs.use-dependencies && always()
+      if: inputs.use-dependencies == 'true' && always()
       run: |
         echo "Stopping Docker Containers"
         docker-compose -f ${{inputs.docker-compose-file-path}} down -v --remove-orphans
