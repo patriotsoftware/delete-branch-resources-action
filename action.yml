@@ -96,6 +96,12 @@ runs:
         GITHUB_TOKEN: ${{ inputs.github-token }}
       shell: bash
 
+    - name: Where Am I
+      run: |
+        echo "List Files/Directories"
+        ls
+      shell: bash
+
     - uses: actions/upload-artifact@v3
       if: (inputs.upload-sonar-results == 'true')
       with:
