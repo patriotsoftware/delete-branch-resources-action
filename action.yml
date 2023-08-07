@@ -100,7 +100,7 @@ runs:
       if: (inputs.upload-sonar-results == 'true')
       with:
         name: sonar-report
-        path: .scannerwork/report-task.txt
+        path: /.sonarqube/out/.sonar/report-task.txt
 
     - name: Output Docker Container Logs
       uses: jwalton/gh-docker-logs@v2
