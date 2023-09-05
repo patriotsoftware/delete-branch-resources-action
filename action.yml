@@ -43,7 +43,7 @@ runs:
   using: 'composite'
   steps:
 
-    - name: Install dotnet Tools
+    - name: Dotnet Sonar Scanner Install
       run: |
         if dotnet tool list -g | grep -q sonarscanner; then
           echo "Sonar Scanner Already Installed"
@@ -52,6 +52,15 @@ runs:
           echo "Sonar Scanner now installed."
         fi
       shell: bash
+
+    - name: Dotnet Coverage Install
+      run: | 
+        if dotnet tool list -g | grep -q dotnet-coverage; then
+          echo "Dotnet Coverage Already Installed"
+        else
+          dotnet tool install -g dotnet-coverage
+          echo "Dotnet Coverage now installed."
+        fi
         
     - name: Start Containerized Dependencies
       if: (inputs.use-dependencies == 'true') && (inputs.path-to-repo-root == '')
@@ -72,20 +81,27 @@ runs:
         GITHUB_TOKEN: ${{ inputs.github-token }} 
       run: |
         export PATH=$PATH:$HOME/.dotnet/tools
-        dotnet sonarscanner begin /k:"${{ inputs.sonar-project-name }}" /d:sonar.scm.revision=$GITHUB_SHA /d:sonar.token=${{ inputs.sonar-token }} /d:sonar.host.url=https://sonar.dev-internal.patriotsoftware.com /d:sonar.cs.vscoveragexml.reportsPaths=test/**/TestResults/**/*.xml /d:sonar.verbose=false
-      shell: bash
+        dotnet sonarscanner begin \ 
+          /k:"${{ inputs.sonar-project-name }}" \ 
+          /d:sonar.scm.revision=$GITHUB_SHA \ 
+          /d:sonar.token=${{ inputs.sonar-token }} \ 
+          /d:sonar.host.url=https://sonar.dev-internal.patriotsoftware.com \ 
+          /d:sonar.cs.vscoveragexml.reportsPaths=coverage.xml \ 
+          /d:sonar.verbose=false
 
-    - name: Run Tests
+    - name: Project Build
       env:
-        AWS_ACCOUNT_ID: '305628290583'
-        AWS_REGION: 'us-east-1'
-        AWS_ACCESS_KEY_ID: ${{ inputs.aws-access-key-id }}
-        AWS_SECRET_ACCESS_KEY: ${{ inputs.aws-secret-access-key }}
-      run: |
-        echo "running dotnet tests....."
+        GITHUB_TOKEN: ${{ inputs.github-token }} 
+      run: dotnet build  
+      
+    - name: Run Tests and Code Coverage
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }} 
+      run: |        
+        echo "running dotnet tests and code coverage....."
+        dotnet tool update -g dotnet-coverage
         export PATH=$PATH:$HOME/.dotnet/tools
-        dotnet test --logger 'trx;LogFileName=test-results.trx' --configuration Release --verbosity minimal --collect "Code Coverage" --filter TestCategory!='Smoke' --settings:test/local.runsettings
-      shell: bash
+        dotnet-coverage collect 'dotnet test --logger "trx;LogFileName=test-results.trx" --configuration Release --verbosity minimal --collect "Code Coverage" --filter TestCategory!="Smoke" --settings:test/local.runsettings' -f xml  -o 'coverage.xml'
 
     - name: Sonarqube end
       run: |
@@ -94,7 +110,6 @@ runs:
         dotnet sonarscanner end /d:sonar.token="${{inputs.sonar-token }}"
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
-      shell: bash
 
     - name: Where Am I
       run: |
