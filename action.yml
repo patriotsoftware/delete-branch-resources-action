@@ -61,6 +61,7 @@ runs:
           dotnet tool install -g dotnet-coverage
           echo "Dotnet Coverage now installed."
         fi
+      shell: bash
         
     - name: Start Containerized Dependencies
       if: (inputs.use-dependencies == 'true') && (inputs.path-to-repo-root == '')
@@ -88,11 +89,13 @@ runs:
           /d:sonar.host.url=https://sonar.dev-internal.patriotsoftware.com \ 
           /d:sonar.cs.vscoveragexml.reportsPaths=coverage.xml \ 
           /d:sonar.verbose=false
+      shell: bash
 
     - name: Project Build
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }} 
       run: dotnet build  
+      shell: bash
       
     - name: Run Tests and Code Coverage
       env:
@@ -102,6 +105,7 @@ runs:
         dotnet tool update -g dotnet-coverage
         export PATH=$PATH:$HOME/.dotnet/tools
         dotnet-coverage collect 'dotnet test --logger "trx;LogFileName=test-results.trx" --configuration Release --verbosity minimal --collect "Code Coverage" --filter TestCategory!="Smoke" --settings:test/local.runsettings' -f xml  -o 'coverage.xml'
+      shell: bash
 
     - name: Sonarqube end
       run: |
@@ -110,6 +114,7 @@ runs:
         dotnet sonarscanner end /d:sonar.token="${{inputs.sonar-token }}"
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
+      shell: bash
 
     - name: Where Am I
       run: |
