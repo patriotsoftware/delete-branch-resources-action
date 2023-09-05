@@ -99,6 +99,10 @@ runs:
       
     - name: Run Tests and Code Coverage
       env:
+        AWS_ACCOUNT_ID: '305628290583'
+        AWS_REGION: 'us-east-1'
+        AWS_ACCESS_KEY_ID: ${{ inputs.aws-access-key-id }}
+        AWS_SECRET_ACCESS_KEY: ${{ inputs.aws-secret-access-key }}
         GITHUB_TOKEN: ${{ inputs.github-token }} 
       run: |        
         echo "running dotnet tests and code coverage....."
