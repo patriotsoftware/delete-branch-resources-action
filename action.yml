@@ -43,13 +43,23 @@ runs:
   using: 'composite'
   steps:
 
-    - name: Install dotnet Tools
+    - name: Dotnet Sonar Scanner Install
       run: |
         if dotnet tool list -g | grep -q sonarscanner; then
           echo "Sonar Scanner Already Installed"
         else
           dotnet tool install --global dotnet-sonarscanner --version ${{inputs.sonar-tool-version}}
           echo "Sonar Scanner now installed."
+        fi
+      shell: bash
+
+    - name: Dotnet Coverage Install
+      run: | 
+        if dotnet tool list -g | grep -q dotnet-coverage; then
+          echo "Dotnet Coverage Already Installed"
+        else
+          dotnet tool install -g dotnet-coverage
+          echo "Dotnet Coverage now installed."
         fi
       shell: bash
         
@@ -72,19 +82,27 @@ runs:
         GITHUB_TOKEN: ${{ inputs.github-token }} 
       run: |
         export PATH=$PATH:$HOME/.dotnet/tools
-        dotnet sonarscanner begin /k:"${{ inputs.sonar-project-name }}" /d:sonar.scm.revision=$GITHUB_SHA /d:sonar.token=${{ inputs.sonar-token }} /d:sonar.host.url=https://sonar.dev-internal.patriotsoftware.com /d:sonar.cs.vscoveragexml.reportsPaths=test/**/TestResults/**/*.xml /d:sonar.verbose=false
+        dotnet sonarscanner begin /k:"${{ inputs.sonar-project-name }}" /d:sonar.scm.revision=$GITHUB_SHA /d:sonar.token=${{ inputs.sonar-token }} /d:sonar.host.url=https://sonar.dev-internal.patriotsoftware.com /d:sonar.cs.vscoveragexml.reportsPaths=coverage.xml /d:sonar.verbose=false
       shell: bash
 
-    - name: Run Tests
+    - name: Project Build
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }} 
+      run: dotnet build  
+      shell: bash
+      
+    - name: Run Tests and Code Coverage
       env:
         AWS_ACCOUNT_ID: '305628290583'
         AWS_REGION: 'us-east-1'
         AWS_ACCESS_KEY_ID: ${{ inputs.aws-access-key-id }}
         AWS_SECRET_ACCESS_KEY: ${{ inputs.aws-secret-access-key }}
-      run: |
-        echo "running dotnet tests....."
+        GITHUB_TOKEN: ${{ inputs.github-token }} 
+      run: |        
+        echo "running dotnet tests and code coverage....."
+        dotnet tool update -g dotnet-coverage
         export PATH=$PATH:$HOME/.dotnet/tools
-        dotnet test --logger 'trx;LogFileName=test-results.trx' --configuration Release --verbosity minimal --collect "Code Coverage" --filter TestCategory!='Smoke' --settings:test/local.runsettings
+        dotnet-coverage collect 'dotnet test --logger "trx;LogFileName=test-results.trx" --configuration Release --verbosity minimal --collect "Code Coverage" --filter TestCategory!="Smoke" --settings:test/local.runsettings' -f xml  -o 'coverage.xml'
       shell: bash
 
     - name: Sonarqube end
