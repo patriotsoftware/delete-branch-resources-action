@@ -22,7 +22,7 @@ helm-cleanup:
   name: "Helm Cleanup"
   runs-on: psidev-linux
   steps:
-  - uses: patriotsoftware/helm-cleanup-action
+  - uses: patriotsoftware/helm-cleanup-action@v1
     with:
       namespace: payrollcorepayschedulesapi
       aws-access-key-id: ${{ secrets.DEV_AWS_ACCESS_KEY_ID }}
