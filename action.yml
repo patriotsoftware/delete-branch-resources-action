@@ -56,10 +56,11 @@ runs:
       if: always()
       run: |
         array=${{ inputs.release-names-array }}
+        namespace=${{ inputs.namespace }}
         for release_name in ${array[@]};
         do
-          echo "Uninstall -n $inputs.namespace $release_name"
-          helm uninstall -n $inputs.namespace $release_name
+          echo "Uninstall -n $namespace $release_name"
+          helm uninstall -n $namespace $release_name
         done
       shell: bash
  
