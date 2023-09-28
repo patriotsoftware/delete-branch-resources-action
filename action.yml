@@ -30,11 +30,13 @@ runs:
         echo "branch=$(echo ${UNESCAPED_BRANCH_NAME})" >> $GITHUB_OUTPUT | sed "s%refs\/heads\/%%g"
         echo "clean-branch=$(echo ${UNESCAPED_BRANCH_NAME} | sed 's/_//g' | tr '[:upper:]' '[:lower:]' | cut -c -38)" >> $GITHUB_OUTPUT | sed "s%refs\/heads\/%%g" 
         # The CDK needs the original unaltered branch name.
+      shell: bash
         
     - name: Branch Outputs
       run: |
         echo ${{ steps.extract_branch.outputs.clean-branch }}
         echo ${{ steps.extract_branch.outputs.branch }}
+      shell: bash
   
     - name: Checkout code
       id: checkout_code
