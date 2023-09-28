@@ -58,8 +58,8 @@ runs:
         array=${{ inputs.release-names-array }}
         for release_name in ${array[@]};
         do
-          echo "Uninstall -n $NAMESPACE $release_name"
-          helm uninstall -n $NAMESPACE $release_name
+          echo "Uninstall -n $inputs.namespace $release_name"
+          helm uninstall -n $inputs.namespace $release_name
         done
       shell: bash
  
