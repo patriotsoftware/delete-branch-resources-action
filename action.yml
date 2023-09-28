@@ -82,4 +82,5 @@ runs:
         AWS_REGION: 'us-east-1'
         REPOSITORY_NAME: ${NAMESPACE}/${{ steps.extract_branch.outputs.clean-branch }}
       run: aws ecr delete-repository --repository-name "${REPOSITORY_NAME}" --force
+      shell: bash
 
