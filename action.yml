@@ -73,6 +73,7 @@ runs:
         AWS_REGION: 'us-east-1'
         BRANCH_NAME: ${{ steps.extract_branch.outputs.branch }}
       run: |
+        echo "Delete CDK Stacks: $BRANCH_NAME"
         cd deploy
         cdk destroy --all -f
       shell: bash
@@ -83,7 +84,7 @@ runs:
       env:
         AWS_ACCOUNT_ID: '305628290583'
         AWS_REGION: 'us-east-1'
-        REPOSITORY_NAME: ${NAMESPACE}/${{ steps.extract_branch.outputs.clean-branch }}
+        REPOSITORY_NAME: ${{ inputs.namespace }}/${{ steps.extract_branch.outputs.clean-branch }}
       run: aws ecr delete-repository --repository-name "${REPOSITORY_NAME}" --force
       shell: bash
 
