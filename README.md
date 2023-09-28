@@ -5,7 +5,7 @@ Action intended to be called from cleanup bad deploys to do a helm-uninstall.
 
 ## Parameters
 
-#### 'helm-namespace' required)
+#### 'namespace' required)
 Namespace used by the repo and required for the helm uninstall command.
 
 #### 'aws-access-key-id' (required)
@@ -26,5 +26,5 @@ helm-cleanup:
     with:
       aws-access-key-id: ${{ secrets.DEV_AWS_ACCESS_KEY_ID }}
       aws-secret-access-key: ${{ secrets.DEV_AWS_SECRET_ACCESS_KEY }}
-      sonar-project-name: payrollcorepayschedulesapi
+      namespace: payrollcorepayschedulesapi
 ```
