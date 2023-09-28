@@ -72,6 +72,7 @@ runs:
       run: |
         cd deploy
         cdk destroy --all -f
+      shell: bash
 
     - name: Delete ECR Repository
       id: delete_ecr
