@@ -55,7 +55,7 @@ runs:
       id: uninstall_helm_releases
       if: always()
       run: |
-        array = ${{ inputs.release-names-array }}
+        array=${{ inputs.release-names-array }}
         for release_name in ${array[@]};
         do
           echo "Uninstall -n $NAMESPACE $release_name"
