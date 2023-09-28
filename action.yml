@@ -57,8 +57,9 @@ runs:
       run: |
         array=${{ inputs.release-names-array }}
         namespace=${{ inputs.namespace }}
-        for release_name in ${array[@]};
+        for r in ${array[@]};
         do
+          release_name=$r-${{ steps.extract_branch.outputs.clean-branch }}
           echo "Uninstall -n $namespace $release_name"
           helm uninstall -n $namespace $release_name
         done
