@@ -26,8 +26,6 @@ runs:
       id: extract_branch
       run: |
         export UNESCAPED_BRANCH_NAME=${{ inputs.branch-name }}
-        export NAMESPACE=${{ inputs.namespace }}
-        echo "Namespace=$NAMESPACE"
         echo "branch=$(echo ${UNESCAPED_BRANCH_NAME})" >> $GITHUB_OUTPUT | sed "s%refs\/heads\/%%g"
         echo "clean-branch=$(echo ${UNESCAPED_BRANCH_NAME} | sed 's/_//g' | tr '[:upper:]' '[:lower:]' | cut -c -38)" >> $GITHUB_OUTPUT | sed "s%refs\/heads\/%%g" 
         # The CDK needs the original unaltered branch name.
@@ -88,3 +86,7 @@ runs:
       run: aws ecr delete-repository --repository-name "${REPOSITORY_NAME}" --force
       shell: bash
 
+    - name: Delete Branch Database
+      if: always()
+      id: delete-branch-database
+      run: ./data/delete_branch_database.sh BuildUserDatabaseConnectionSettings ${{ steps.extract_branch.outputs.branch }}
