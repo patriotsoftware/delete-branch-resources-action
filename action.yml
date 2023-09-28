@@ -22,7 +22,6 @@ runs:
         aws-access-key-id: ${{ inputs.aws-access-key-id }}
         aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
         aws-region: us-east-1
-      shell: bash
           
     - name: Clean Up Helm
       id: helm-uninstall
