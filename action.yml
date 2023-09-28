@@ -1,28 +1,10 @@
-name: 'Project Validation'
-description: 'Run Sonar and Tests to Validate Quality'
+name: 'Helm Cleanup'
+author: DevOps
+description: Run repository helm cleanup
 
 inputs:
-  sonar-project-name:
-    description: 'Project name in Sonar'
-    required: true
-    default: ''
-  sonar-tool-version:
-    description: 'Sonar tool version'
-    required: false
-    default: '5.13.0'
-  use-dependencies:
-    description: 'Use Docker to run dependencies.'
-    required: false
-    default: 'false'
-  docker-compose-file-path:
-    description: 'Path to docker compose file to start dependencies'
-    required: false
-    default: 'docker-compose/test-dependencies-compose.yml'
-  github-token:
-    description: 'Github Token'
-    required: true
-  sonar-token:
-    description: 'Sonar Token'
+  namespace:
+    description: 'Helm Namespace'
     required: true
   aws-access-key-id:
     description: 'AWS Access Key ID'
@@ -30,117 +12,34 @@ inputs:
   aws-secret-access-key:
     description: 'AWS Secret Access Key'
     required: true
-  path-to-repo-root:
-    description: 'Path to Repo Root'
-    required: false
-    default: ''
-  upload-sonar-results:
-    description: 'Whether to upload Sonar results as an artifact'
-    required: false
-    default: 'false'
     
 runs:
   using: 'composite'
   steps:
-
-    - name: Dotnet Sonar Scanner Install
-      run: |
-        if dotnet tool list -g | grep -q sonarscanner; then
-          echo "Sonar Scanner Already Installed"
-        else
-          dotnet tool install --global dotnet-sonarscanner --version ${{inputs.sonar-tool-version}}
-          echo "Sonar Scanner now installed."
-        fi
-      shell: bash
-
-    - name: Dotnet Coverage Install
-      run: | 
-        if dotnet tool list -g | grep -q dotnet-coverage; then
-          echo "Dotnet Coverage Already Installed"
-        else
-          dotnet tool install -g dotnet-coverage
-          echo "Dotnet Coverage now installed."
-        fi
-      shell: bash
-        
-    - name: Start Containerized Dependencies
-      if: (inputs.use-dependencies == 'true') && (inputs.path-to-repo-root == '')
-      run: |
-        echo "Running docker compose"
-        docker-compose -f ${{inputs.docker-compose-file-path}} up -d
-      shell: bash
-
-    - name: Start Containerized Dependencies with Path
-      if: (inputs.use-dependencies == 'true') && (inputs.path-to-repo-root != '')
-      run: |
-        echo "Running docker compose"
-        PATH_TO_REPO_ROOT='${{ inputs.path-to-repo-root }}' docker-compose -f ${{inputs.docker-compose-file-path}} up -d
-      shell: bash
-
-    - name: Sonarqube Run
-      env:
-        GITHUB_TOKEN: ${{ inputs.github-token }} 
-      run: |
-        export PATH=$PATH:$HOME/.dotnet/tools
-        dotnet sonarscanner begin /k:"${{ inputs.sonar-project-name }}" /d:sonar.scm.revision=$GITHUB_SHA /d:sonar.token=${{ inputs.sonar-token }} /d:sonar.host.url=https://sonar.dev-internal.patriotsoftware.com /d:sonar.cs.vscoveragexml.reportsPaths=coverage.xml /d:sonar.verbose=false
-      shell: bash
-
-    - name: Project Build
-      env:
-        GITHUB_TOKEN: ${{ inputs.github-token }} 
-      run: dotnet build  
-      shell: bash
-      
-    - name: Run Tests and Code Coverage
-      env:
-        AWS_ACCOUNT_ID: '305628290583'
-        AWS_REGION: 'us-east-1'
-        AWS_ACCESS_KEY_ID: ${{ inputs.aws-access-key-id }}
-        AWS_SECRET_ACCESS_KEY: ${{ inputs.aws-secret-access-key }}
-        GITHUB_TOKEN: ${{ inputs.github-token }} 
-      run: |        
-        echo "running dotnet tests and code coverage....."
-        dotnet tool update -g dotnet-coverage
-        export PATH=$PATH:$HOME/.dotnet/tools
-        dotnet-coverage collect 'dotnet test --logger "trx;LogFileName=test-results.trx" --configuration Release --verbosity minimal --collect "Code Coverage" --filter TestCategory!="Smoke" --settings:test/local.runsettings' -f xml  -o 'coverage.xml'
-      shell: bash
-
-    - name: Sonarqube end
-      run: |
-        export PATH=$PATH:$HOME/.dotnet/tools
-        . ~/.bashrc
-        dotnet sonarscanner end /d:sonar.token="${{inputs.sonar-token }}"
-      env:
-        GITHUB_TOKEN: ${{ inputs.github-token }}
-      shell: bash
-
-    - name: Where Am I
-      run: |
-        echo "List Files/Directories"
-        ls
-      shell: bash
-
-    - uses: actions/upload-artifact@v3
-      if: (inputs.upload-sonar-results == 'true')
+    - name: Authenticate with DEV
+      uses: aws-actions/configure-aws-credentials@v1-node16
       with:
-        name: sonar-report
-        path: .sonarqube/out/.sonar/report-task.txt
-
-    - name: Output Docker Container Logs
-      uses: jwalton/gh-docker-logs@v2
-      if: inputs.use-dependencies == 'true' && always()
-
-    - name: Test Report
-      uses: dorny/test-reporter@v1
-      if: always()
-      with:
-        name: Project Validation Test Results            
-        path: test/**/TestResults/**/test-results.trx
-        reporter: dotnet-trx
-
-    - name: Stop Containerized Dependencies
-      if: inputs.use-dependencies == 'true' && always()
+        aws-access-key-id: ${{ inputs.aws-access-key-id }}
+        aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
+        aws-region: us-east-1
+      shell: bash
+          
+    - name: Clean Up Helm
+      id: helm-uninstall
       run: |
-        echo "Stopping Docker Containers"
-        docker-compose -f ${{inputs.docker-compose-file-path}} down -v --remove-orphans
+        namespace="${{ inputs.namespace }}"
+        results_array=$(kubectl get pods  --no-headers -o custom-columns=":metadata.name" -n $namespace)
+        pods=(`echo ${results_array}`);
+
+        for i in "${pods[@]}"
+        do
+          value=$(kubectl get pods $i --no-headers -n $namespace)
+          if [[ ${value} != *"Running"* ]] && [[ ${value} != *"Terminating"* ]]; then
+                # helm name is retrieved by excluding everything after second to last dash:
+                echo "POD STATUS: ${value}"
+                HELM_NAME=$(echo $i | sed 's/\-[^-]*$//' | sed 's/\-[^-]*$//')
+                echo "Uninstall HELM: ${HELM_NAME}"
+                helm uninstall $HELM_NAME -n $namespace
+          fi
+        done
       shell: bash
