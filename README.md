@@ -32,7 +32,7 @@ delete_branch_resources:
   steps:
   - uses: patriotsoftware/delete-branch-resources-action@v1
     with:
-      branch-name: github.event.ref
+      branch-name: ${{ github.event.ref }}
       namespace: payrollcore
       release-names-array: ("notifier-consumer" "payroll-consumer" "payrollcore")
       aws-access-key-id: ${{ secrets.DEV_AWS_ACCESS_KEY_ID }}
