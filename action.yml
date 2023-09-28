@@ -60,8 +60,8 @@ runs:
         for r in ${array[@]};
         do
           release_name=$r-${{ steps.extract_branch.outputs.clean-branch }}
-          echo "Uninstall -n $namespace $release_name"
-          helm uninstall -n $namespace $release_name
+          echo "uninstall -n $namespace $release_name"
+          helm uninstall -n $namespace $release_name || exit_code=$?
         done
       shell: bash
  
