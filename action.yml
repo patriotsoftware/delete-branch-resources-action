@@ -1,11 +1,17 @@
-name: 'Helm Cleanup'
+name: 'Delete Branch Resources'
 author: DevOps
-description: Run repository helm cleanup
+description: Run delete branch resources
 
 inputs:
-  namespace:
-    description: 'Helm Namespace'
+  branch-name:
+    description: 'Branch name github.event.ref'
     required: true
+  namespace:
+    description: 'Helm namespace'
+    required: true
+  release-names-array:
+    description: 'Release names array'
+    required: true 
   aws-access-key-id:
     description: 'AWS Access Key ID'
     required: true
@@ -16,29 +22,61 @@ inputs:
 runs:
   using: 'composite'
   steps:
+    - name: Extract branch name
+      id: extract_branch
+      run: |
+        export UNESCAPED_BRANCH_NAME=${{ inputs.branch-name }}
+        export NAMESPACE=${{ inputs.namespace }}
+        echo "branch=$(echo ${UNESCAPED_BRANCH_NAME})" >> $GITHUB_OUTPUT | sed "s%refs\/heads\/%%g"
+        echo "clean-branch=$(echo ${UNESCAPED_BRANCH_NAME} | sed 's/_//g' | tr '[:upper:]' '[:lower:]' | cut -c -38)" >> $GITHUB_OUTPUT | sed "s%refs\/heads\/%%g" 
+        # The CDK needs the original unaltered branch name.
+        
+    - name: Branch Outputs
+      run: |
+        echo ${{ steps.extract_branch.outputs.clean-branch }}
+        echo ${{ steps.extract_branch.outputs.branch }}
+  
+    - name: Checkout code
+      id: checkout_code
+      uses: actions/checkout@v3
+
     - name: Authenticate with DEV
+      id: authenticate_dev
       uses: aws-actions/configure-aws-credentials@v1-node16
       with:
         aws-access-key-id: ${{ inputs.aws-access-key-id }}
         aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
         aws-region: us-east-1
-          
-    - name: Clean Up Helm
-      id: helm-uninstall
-      run: |
-        namespace="${{ inputs.namespace }}"
-        results_array=$(kubectl get pods  --no-headers -o custom-columns=":metadata.name" -n $namespace)
-        pods=(`echo ${results_array}`);
 
-        for i in "${pods[@]}"
+    - name: Uninstall Helm Release(s)
+      id: uninstall_helm_releases
+      if: always()
+      run: |
+        array = ${{ inputs.release-names-array }}
+        for release_name in ${array[@]}
         do
-          value=$(kubectl get pods $i --no-headers -n $namespace)
-          if [[ ${value} != *"Running"* ]] && [[ ${value} != *"Terminating"* ]]; then
-                # helm name is retrieved by excluding everything after second to last dash:
-                echo "POD STATUS: ${value}"
-                HELM_NAME=$(echo $i | sed 's/\-[^-]*$//' | sed 's/\-[^-]*$//')
-                echo "Uninstall HELM: ${HELM_NAME}"
-                helm uninstall $HELM_NAME -n $namespace
-          fi
+          echo "Uninstall -n $NAMESPACE $release_name"
+          helm uninstall -n $NAMESPACE $release_name
         done
       shell: bash
+ 
+    - name: Delete CDK Stacks
+      id: delete_cdk
+      if: always()
+      env:
+        AWS_ACCOUNT_ID: '305628290583'
+        AWS_REGION: 'us-east-1'
+        BRANCH_NAME: ${{ steps.extract_branch.outputs.branch }}
+      run: |
+        cd deploy
+        cdk destroy --all -f
+
+    - name: Delete ECR Repository
+      id: delete_ecr
+      if: always()
+      env:
+        AWS_ACCOUNT_ID: '305628290583'
+        AWS_REGION: 'us-east-1'
+        REPOSITORY_NAME: ${NAMESPACE}/${{ steps.extract_branch.outputs.clean-branch }}
+      run: aws ecr delete-repository --repository-name "${REPOSITORY_NAME}" --force
+
