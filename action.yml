@@ -90,3 +90,4 @@ runs:
       if: always()
       id: delete-branch-database
       run: ./data/delete_branch_database.sh BuildUserDatabaseConnectionSettings ${{ steps.extract_branch.outputs.branch }}
+      shell: bash
