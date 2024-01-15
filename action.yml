@@ -18,6 +18,10 @@ inputs:
   aws-secret-access-key:
     description: 'AWS Secret Access Key'
     required: true
+  cdk-folder:
+    description: 'CDK folder path. Default is deploy.
+    required: false
+    default: 'deploy'
     
 runs:
   using: 'composite'
@@ -73,7 +77,7 @@ runs:
         BRANCH_NAME: ${{ steps.extract_branch.outputs.branch }}
       run: |
         echo "Delete CDK Stacks: $BRANCH_NAME"
-        cd deploy
+        cd ${{ inputs.cdk-folder }}
         cdk destroy --all -f
       shell: bash
 
