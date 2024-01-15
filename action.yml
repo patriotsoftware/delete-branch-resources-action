@@ -52,14 +52,15 @@ runs:
     - name: Uninstall Helm Release(s)
       id: uninstall_helm_releases
       if: always()
+      env:
+        NAMESPACE: ${{ inputs.namespace }}
       run: |
         array=${{ inputs.release-names-array }}
-        namespace=${{ inputs.namespace }}
         for r in ${array[@]};
         do
           release_name=$r-${{ steps.extract_branch.outputs.clean-branch }}
-          echo "uninstall -n $namespace $release_name"
-          helm uninstall -n $namespace $release_name || exit_code=$?
+          echo "uninstall -n ${NAMESPACE} $release_name"
+          helm uninstall -n ${NAMESPACE} $release_name || exit_code=$?
         done
       shell: bash
  
