@@ -67,7 +67,8 @@ runs:
         array=${{ inputs.release-names-array }}
         for r in ${array[@]};
         do
-          echo "$r"           
+          release_name=$r-${{ steps.extract_branch.outputs.clean-branch }}
+          echo "$release_name"           
         done
         # release_name=$r-${{ steps.extract_branch.outputs.clean-branch }}
         # echo "uninstall -n ${NAMESPACE} $release_name"    
