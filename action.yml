@@ -67,26 +67,24 @@ runs:
         array=${{ inputs.release-names-array }}
         for r in ${array[@]};
         do
-          release_name=$r-${{ steps.extract_branch.outputs.branch }}
-          echo "uninstall -n ${NAMESPACE} $release_name"          
+          release_name=$r-${{ steps.extract_branch.outputs.clean-branch }}
+          echo "uninstall -n ${NAMESPACE} $release_name"
+          # helm uninstall -n ${NAMESPACE} $release_name || exit_code=$?          
         done
-        # release_name=$r-${{ steps.extract_branch.outputs.clean-branch }}
-        # echo "uninstall -n ${NAMESPACE} $release_name"    
-        # helm uninstall -n ${NAMESPACE} $release_name || exit_code=$?
       shell: bash
  
-#     - name: Delete CDK Stacks
-#       id: delete_cdk
-#       if: always()
-#       env:
-#         AWS_ACCOUNT_ID: '305628290583'
-#         AWS_REGION: 'us-east-1'
-#         BRANCH_NAME: ${{ steps.extract_branch.outputs.branch }}
-#       run: |
-#         echo "Delete CDK Stacks: $BRANCH_NAME"
-#       # cd ${{ inputs.cdk-folder }}
-#       # cdk destroy --all -f
-#       shell: bash
+    - name: Delete CDK Stacks
+      id: delete_cdk
+      if: always()
+      env:
+        AWS_ACCOUNT_ID: '305628290583'
+        AWS_REGION: 'us-east-1'
+        BRANCH_NAME: ${{ steps.extract_branch.outputs.branch }}
+      run: |
+        echo "Delete CDK Stacks: $BRANCH_NAME"
+      # cd ${{ inputs.cdk-folder }}
+      # cdk destroy --all -f
+      shell: bash
 
 #     - name: Delete ECR Repository
 #       id: delete_ecr
