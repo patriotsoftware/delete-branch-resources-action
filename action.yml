@@ -22,6 +22,10 @@ inputs:
   aws-secret-access-key:
     description: 'AWS Secret Access Key'
     required: true
+  aws-account-id:
+    description: 'AWS Account ID'
+    default: '305628290583'
+    required: false
   aws-region:
     description: 'AWS Region'
     default: 'us-east-1'
@@ -80,8 +84,8 @@ runs:
       id: delete_cdk
       if: always()
       env:
-        AWS_ACCOUNT_ID: '305628290583'
-        AWS_REGION: 'us-east-1'
+        AWS_ACCOUNT_ID: ${{ inputs.aws-account-id }}
+        AWS_REGION: ${{ inputs.aws-region }}
         BRANCH_NAME: ${{ steps.extract_branch.outputs.branch }}
       run: |
         echo "Delete CDK Stacks: $BRANCH_NAME"
@@ -94,7 +98,7 @@ runs:
       shell: bash
       if: always()
       env:
-        AWS_ACCOUNT_ID: '305628290583'
+        AWS_ACCOUNT_ID: ${{ inputs.aws-account-id }}
         AWS_REGION: ${{ inputs.aws-region }}
         REPOSITORY_NAME: ${{ inputs.namespace }}/${{ steps.extract_branch.outputs.clean-branch }}
       run: echo "aws ecr delete-repository --repository-name "${REPOSITORY_NAME}" --force" 
