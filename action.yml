@@ -12,7 +12,7 @@ inputs:
   release-names-array:
     description: 'Release names array'
     required: true
-  delete-branch:
+  delete-branch-db:
     description: 'Delete branch'
     required: false
     default: false 
@@ -98,7 +98,7 @@ runs:
 #       shell: bash
 
 #     - name: Delete Branch Database
-#       if: ${{ inputs.delete-branch }}
+#       if: ${{ inputs.delete-branch-db }}
 #       id: delete-branch-database
 #       run: echo "./data/delete_branch_database.sh BuildUserDatabaseConnectionSettings ${{ steps.extract_branch.outputs.branch }}"
 # # ./data/delete_branch_database.sh BuildUserDatabaseConnectionSettings ${{ steps.extract_branch.outputs.branch }}
