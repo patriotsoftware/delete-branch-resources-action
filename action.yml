@@ -107,7 +107,8 @@ runs:
     - name: Delete Branch Database
       shell: bash
       if: ${{ inputs.delete-branch-db }}
-      id: delete-branch-database
-      run: echo "./data/delete_branch_database.sh BuildUserDatabaseConnectionSettings ${{ steps.extract_branch.outputs.branch }}"
+      run: |
+        echo "Deleting branch database..."
+        echo "./data/delete_branch_database.sh BuildUserDatabaseConnectionSettings ${{ steps.extract_branch.outputs.branch }}"
 # ./data/delete_branch_database.sh BuildUserDatabaseConnectionSettings ${{ steps.extract_branch.outputs.branch }}
       
