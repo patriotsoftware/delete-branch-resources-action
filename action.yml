@@ -67,10 +67,10 @@ runs:
         array=${{ inputs.release-names-array }}
         for r in ${array[@]};
         do
-          release_name=$r-${{ steps.extract_branch.outputs.clean-branch }}
-          echo "uninstall -n ${NAMESPACE} $release_name"
-      # helm uninstall -n ${NAMESPACE} $release_name || exit_code=$?
+          # release_name=$r-${{ steps.extract_branch.outputs.clean-branch }}
+          # echo "uninstall -n ${NAMESPACE} $release_name"     
         done
+        # helm uninstall -n ${NAMESPACE} $release_name || exit_code=$?
       shell: bash
  
 #     - name: Delete CDK Stacks
