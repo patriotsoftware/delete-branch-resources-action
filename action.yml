@@ -43,15 +43,13 @@ runs:
     id: release-names
     shell: bash
     run: |
-      namespace=${{ inputs.namespace }}
-      passed=${{ inputs.release-names-array }}     
-      if [ -z "${passed}" ]; 
-      then        
-        single="($namespace)"
-        echo "$single"
-        echo "array=${single[@]}" >> $GITHUB_OUTPUT
+      default_release="(${{ inputs.namespace }})"      
+      release_names=${{ inputs.release-names-array }}     
+      if [ -z "${release_names}" ]; 
+      then
+        echo "array=${default_release[@]}" >> $GITHUB_OUTPUT
       else
-        echo "array=${passed[@]}" >> $GITHUB_OUTPUT
+        echo "array=${release_names[@]}" >> $GITHUB_OUTPUT
       fi
 
   - name: Extract branch name
@@ -92,7 +90,7 @@ runs:
       do
         release_name=$r-${{ steps.extract_branch.outputs.clean-branch }}
         echo "uninstall -n ${NAMESPACE} $release_name"
-        # helm uninstall -n ${NAMESPACE} $release_name || exit_code=$?          
+        helm uninstall -n ${NAMESPACE} $release_name || exit_code=$?          
       done    
 
   - name: Delete CDK Stacks
@@ -105,8 +103,8 @@ runs:
     shell: bash
     run: |
       echo "Delete CDK Stacks: $BRANCH_NAME"
-    # cd ${{ inputs.cdk-folder }}
-    # cdk destroy --all -f      
+      cd ${{ inputs.cdk-folder }}
+      cdk destroy --all -f      
 
   - name: Delete ECR Repository
     id: delete_ecr      
@@ -116,8 +114,9 @@ runs:
       AWS_REGION: ${{ inputs.aws-region }}
       REPOSITORY_NAME: ${{ inputs.namespace }}/${{ steps.extract_branch.outputs.clean-branch }}
     shell: bash
-    run: echo "aws ecr delete-repository --repository-name ${REPOSITORY_NAME} --force " 
-    # aws ecr delete-repository --repository-name "${REPOSITORY_NAME}" --force      
+    run: |
+      echo "aws ecr delete-repository --repository-name ${REPOSITORY_NAME} --force " 
+      aws ecr delete-repository --repository-name "${REPOSITORY_NAME}" --force      
 
   - name: Delete Branch Database
     shell: bash
