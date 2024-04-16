@@ -123,10 +123,9 @@ runs:
       AWS_ACCOUNT_ID: ${{ inputs.aws-account-id }}
       AWS_REGION: ${{ inputs.aws-region }}
       REPOSITORY_NAME: ${{ inputs.namespace }}/${{ steps.extract_branch.outputs.clean-branch }}
-      REGION: ${{ inputs.aws-region }}
     shell: bash
     run: |
-      if aws ecr describe-repositories --repository-names "$REPOSITORY_NAME" --region "$REGION" >/dev/null 2>&1; then
+      if aws ecr describe-repositories --repository-names "$REPOSITORY_NAME" --region "$AWS_REGION" >/dev/null 2>&1; then
         echo "Repository exists. Proceeding with delete."
         echo "aws ecr delete-repository --repository-name ${REPOSITORY_NAME} --force " 
         aws ecr delete-repository --repository-name "${REPOSITORY_NAME}" --force 
