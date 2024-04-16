@@ -116,7 +116,8 @@ runs:
         AWS_ACCOUNT_ID: ${{ inputs.aws-account-id }}
         AWS_REGION: ${{ inputs.aws-region }}
         REPOSITORY_NAME: ${{ inputs.namespace }}/${{ steps.extract_branch.outputs.clean-branch }}
-      run: aws ecr delete-repository --repository-name "${REPOSITORY_NAME}" --force      
+      run: echo "aws ecr delete-repository --repository-name "${REPOSITORY_NAME}" --force " 
+      # aws ecr delete-repository --repository-name "${REPOSITORY_NAME}" --force      
 
     - name: Delete Branch Database
       shell: bash
