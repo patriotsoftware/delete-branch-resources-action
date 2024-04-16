@@ -81,15 +81,15 @@ runs:
         aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
         aws-region: ${{ inputs.aws-region }}
 
-    - name: Uninstall Helm Release(s)
-      id: uninstall_helm_releases
-      if: always()
-      env:
-        NAMESPACE: ${{ inputs.namespace }}
-      shell: bash
-      run: |
-        array=${{ steps.release-names.outputs.array }}
-        echo "$array"
+    # - name: Uninstall Helm Release(s)
+    #   id: uninstall_helm_releases
+    #   if: always()
+    #   env:
+    #     NAMESPACE: ${{ inputs.namespace }}
+    #   shell: bash
+    #   run: |
+    #     array=${{ steps.release-names.outputs.array }}
+    #     echo "$array"
     #     for r in ${array[@]};
     #     do
     #       release_name=$r-${{ steps.extract_branch.outputs.clean-branch }}
