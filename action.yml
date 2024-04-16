@@ -52,7 +52,7 @@ runs:
   - name: Branch Validation
     run: |
       branch_name=${{ steps.extract_branch.outputs.branch }}
-      if [[$branch_name == 'main'] || [$branch_name != 'master'] || [$branch_name != '_InitialSolutionRename']];
+      if [[ $branch_name == 'main' ] || [ $branch_name == 'master' ] || [ $branch_name == '_InitialSolutionRename' ]];
       then
         echo "Validation failed. $branch_name resources cannot be deleted."
         exit 1
