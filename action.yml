@@ -130,7 +130,7 @@ runs:
 
   - name: Delete Branch Database
     shell: bash
-    if: ${{ inputs.delete-branch-db == true }}
+    if: ${{ inputs.delete-branch-db == true && always() }}
     env:
       BRANCH_NAME: ${{ steps.extract_branch.outputs.branch }}
     run: |
