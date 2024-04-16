@@ -125,10 +125,4 @@ runs:
       BRANCH_NAME: ${{ steps.extract_branch.outputs.branch }}
     run: |
       echo "Deleting branch database..."
-      aws lambda invoke --function-name DropOldDevDatabase --cli-binary-format raw-in-base64-out --payload '{ "dbname": "'"$BRANCH_NAME"'" }' response.json
-      
-      statusCode=$(cat response.json | jq .StatusCode)
-      if [ "$statusCode" != 200 ]
-      then 
-        echo "ERROR: $statusCode"
-      fi
+      ./data/delete_branch_database.sh BuildUserDatabaseConnectionSettings $BRANCH_NAME
