@@ -52,7 +52,7 @@ runs:
     shell: bash
     run: |
       branch_name=${{ steps.extract_branch.outputs.branch }}
-      if [ $branch_name -eq "spg-2209-s3" ] || [ $branch_name -eq "master" ] || [ $branch_name -eq "_InitialSolutionRename" ];
+      if [ "$branch_name" -eq "spg-2209-s3" ] || [ "$branch_name" -eq "master" ] || [ "$branch_name" -eq "_InitialSolutionRename" ];
       then
         echo "Validation failed. $branch_name resources cannot be deleted."
         exit 1
