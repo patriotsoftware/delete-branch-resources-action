@@ -48,9 +48,10 @@ runs:
       if [ -z "${passed}" ]; 
       then        
         single="(\"${namespace}\")"
+        echo "$single"
         echo "array=$single" >> $GITHUB_OUTPUT
       else
-        echo "array=${{ inputs.release-names-array }}" >> $GITHUB_OUTPUT
+        echo "array=$passed" >> $GITHUB_OUTPUT
       fi
 
     - name: Extract branch name
