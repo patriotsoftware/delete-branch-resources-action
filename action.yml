@@ -50,6 +50,7 @@ runs:
       # The CDK needs the original unaltered branch name.
       
   - name: Branch Validation
+    shell: bash
     run: |
       branch_name=${{ steps.extract_branch.outputs.branch }}
       if [[ $branch_name == 'main' ] || [ $branch_name == 'master' ] || [ $branch_name == '_InitialSolutionRename' ]];
