@@ -47,7 +47,7 @@ runs:
       passed=${{ inputs.release-names-array }}
       if [ -z "${passed}" ]; 
       then        
-        single="($namespace)"
+        single="(\"${namespace}\")"
         echo "array=$single" >> $GITHUB_OUTPUT
       else
         echo "array=${{ inputs.release-names-array }}" >> $GITHUB_OUTPUT
