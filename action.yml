@@ -38,6 +38,20 @@ inputs:
 runs:
   using: 'composite'
   steps:
+  - name: Set release names array
+    id: release-names
+    shell: bash
+    run: |
+      namespace=${{ inputs.namespace }}
+      passed=${{ inputs.release-names-array }}
+      if [ -z "${passed}" ]; 
+      then        
+        single="($namespace)"
+        echo "array=$single" >> $GITHUB_OUTPUT
+      else
+        echo "array=${{ inputs.release-names-array }}" >> $GITHUB_OUTPUT
+      fi
+
     - name: Extract branch name
       id: extract_branch
       shell: bash
@@ -55,7 +69,7 @@ runs:
   
     - name: Checkout code
       id: checkout_code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Authenticate with DEV
       id: authenticate_dev
@@ -71,7 +85,7 @@ runs:
       env:
         NAMESPACE: ${{ inputs.namespace }}
       run: |
-        array=${{ inputs.release-names-array }}
+        array=${{ steps.release-names.outputs.array }}
         for r in ${array[@]};
         do
           release_name=$r-${{ steps.extract_branch.outputs.clean-branch }}
