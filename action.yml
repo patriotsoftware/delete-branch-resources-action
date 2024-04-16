@@ -88,9 +88,7 @@ runs:
       NAMESPACE: ${{ inputs.namespace }}
     shell: bash
     run: |
-      array=${{ steps.release-names.outputs.array }}
-      echo "$array"
-      for r in ${array[@]};
+      for r in ${{ steps.release-names.outputs.array }};
       do
         release_name=$r-${{ steps.extract_branch.outputs.clean-branch }}
         echo "uninstall -n ${NAMESPACE} $release_name"
