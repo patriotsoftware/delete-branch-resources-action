@@ -89,12 +89,12 @@ runs:
       run: |
         array=${{ steps.release-names.outputs.array }}
         echo "${array[@]}"
-        # for r in ${array[@]};
-        # do
-        #   release_name=$r-${{ steps.extract_branch.outputs.clean-branch }}
-        #   echo "uninstall -n ${NAMESPACE} $release_name"
-        #   # helm uninstall -n ${NAMESPACE} $release_name || exit_code=$?          
-        # done      
+        for r in ${array[@]};
+        do
+          release_name=$r-${{ steps.extract_branch.outputs.clean-branch }}
+          echo "uninstall -n ${NAMESPACE} $release_name"
+          # helm uninstall -n ${NAMESPACE} $release_name || exit_code=$?          
+        done    
  
     # - name: Delete CDK Stacks
     #   id: delete_cdk
