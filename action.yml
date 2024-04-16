@@ -39,7 +39,31 @@ inputs:
 runs:
   using: 'composite'
   if: inputs.branch-name != 'refs/heads/main' && inputs.branch-name != 'refs/heads/master' && inputs.branch-name != '_InitialSolutionRename'
-  steps:
+  steps:  
+  - name: Extract branch name
+    id: extract_branch
+    shell: bash
+    run: |
+      export UNESCAPED_BRANCH_NAME=${{ inputs.branch-name }}
+      echo "branch=$(echo ${UNESCAPED_BRANCH_NAME})" >> $GITHUB_OUTPUT | sed "s%refs\/heads\/%%g"
+      echo "clean-branch=$(echo ${UNESCAPED_BRANCH_NAME} | sed 's/_//g' | tr '[:upper:]' '[:lower:]' | cut -c -38)" >> $GITHUB_OUTPUT | sed "s%refs\/heads\/%%g" 
+      # The CDK needs the original unaltered branch name.
+      
+  - name: Branch Validation
+    run: |
+      branch_name=${{ steps.extract_branch.outputs.branch }}
+      if [[$branch_name == 'main'] || [$branch_name != 'master'] || [$branch_name != '_InitialSolutionRename']];
+      then
+        echo "Validation failed. $branch_name resources cannot be deleted."
+        exit 1
+      fi
+     
+  - name: Branch Outputs
+    run: |
+      echo ${{ steps.extract_branch.outputs.clean-branch }}
+      echo ${{ steps.extract_branch.outputs.branch }}
+    shell: bash
+
   - name: Set release names array
     id: release-names
     shell: bash
@@ -52,21 +76,6 @@ runs:
       else
         echo "array=${release_names[@]}" >> $GITHUB_OUTPUT
       fi
-
-  - name: Extract branch name
-    id: extract_branch
-    shell: bash
-    run: |
-      export UNESCAPED_BRANCH_NAME=${{ inputs.branch-name }}
-      echo "branch=$(echo ${UNESCAPED_BRANCH_NAME})" >> $GITHUB_OUTPUT | sed "s%refs\/heads\/%%g"
-      echo "clean-branch=$(echo ${UNESCAPED_BRANCH_NAME} | sed 's/_//g' | tr '[:upper:]' '[:lower:]' | cut -c -38)" >> $GITHUB_OUTPUT | sed "s%refs\/heads\/%%g" 
-      # The CDK needs the original unaltered branch name.
-      
-  - name: Branch Outputs
-    run: |
-      echo ${{ steps.extract_branch.outputs.clean-branch }}
-      echo ${{ steps.extract_branch.outputs.branch }}
-    shell: bash
 
   - name: Checkout code
     id: checkout_code
