@@ -38,7 +38,6 @@ inputs:
     
 runs:
   using: 'composite'
-  if: inputs.branch-name != 'refs/heads/main' && inputs.branch-name != 'refs/heads/master' && inputs.branch-name != '_InitialSolutionRename'
   steps:  
   - name: Extract branch name
     id: extract_branch
