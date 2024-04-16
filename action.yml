@@ -130,6 +130,5 @@ runs:
       statusCode=$(cat response.json | jq .StatusCode)
       if [ "$statusCode" != 200 ]
       then 
-        errorOccurred=true
-      fi 
-      rm response.json
+        echo "ERROR: $statusCode"
+      fi
