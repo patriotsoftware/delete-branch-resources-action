@@ -4,7 +4,7 @@ description: Delete branch resources
 
 inputs:
   branch-name:
-    description: 'Branch name github.event.ref'
+    description: 'Branch name or github.event.ref'
     required: true
   namespace:
     description: 'Helm namespace'
@@ -47,91 +47,91 @@ runs:
       passed=${{ inputs.release-names-array }}
       if [ -z "${passed}" ]; 
       then        
-        single="($namespace)"
+        single="(\"${namespace}\")"
         echo "array=$single" >> $GITHUB_OUTPUT
       else
         echo "array=${{ inputs.release-names-array }}" >> $GITHUB_OUTPUT
       fi
 
-    - name: Extract branch name
-      id: extract_branch
-      shell: bash
-      run: |
-        export UNESCAPED_BRANCH_NAME=${{ inputs.branch-name }}
-        echo "branch=$(echo ${UNESCAPED_BRANCH_NAME})" >> $GITHUB_OUTPUT | sed "s%refs\/heads\/%%g"
-        echo "clean-branch=$(echo ${UNESCAPED_BRANCH_NAME} | sed 's/_//g' | tr '[:upper:]' '[:lower:]' | cut -c -38)" >> $GITHUB_OUTPUT | sed "s%refs\/heads\/%%g" 
-        # The CDK needs the original unaltered branch name.
+    # - name: Extract branch name
+    #   id: extract_branch
+    #   shell: bash
+    #   run: |
+    #     export UNESCAPED_BRANCH_NAME=${{ inputs.branch-name }}
+    #     echo "branch=$(echo ${UNESCAPED_BRANCH_NAME})" >> $GITHUB_OUTPUT | sed "s%refs\/heads\/%%g"
+    #     echo "clean-branch=$(echo ${UNESCAPED_BRANCH_NAME} | sed 's/_//g' | tr '[:upper:]' '[:lower:]' | cut -c -38)" >> $GITHUB_OUTPUT | sed "s%refs\/heads\/%%g" 
+    #     # The CDK needs the original unaltered branch name.
         
-    - name: Branch Outputs
-      run: |
-        echo ${{ steps.extract_branch.outputs.clean-branch }}
-        echo ${{ steps.extract_branch.outputs.branch }}
-      shell: bash
+    # - name: Branch Outputs
+    #   run: |
+    #     echo ${{ steps.extract_branch.outputs.clean-branch }}
+    #     echo ${{ steps.extract_branch.outputs.branch }}
+    #   shell: bash
   
-    - name: Checkout code
-      id: checkout_code
-      uses: actions/checkout@v4
+    # - name: Checkout code
+    #   id: checkout_code
+    #   uses: actions/checkout@v4
 
-    - name: Authenticate with DEV
-      id: authenticate_dev
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        aws-access-key-id: ${{ inputs.aws-access-key-id }}
-        aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
-        aws-region: ${{ inputs.aws-region }}
+    # - name: Authenticate with DEV
+    #   id: authenticate_dev
+    #   uses: aws-actions/configure-aws-credentials@v4
+    #   with:
+    #     aws-access-key-id: ${{ inputs.aws-access-key-id }}
+    #     aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
+    #     aws-region: ${{ inputs.aws-region }}
 
-    - name: Uninstall Helm Release(s)
-      id: uninstall_helm_releases
-      if: always()
-      env:
-        NAMESPACE: ${{ inputs.namespace }}
-      run: |
-        array=${{ steps.release-names.outputs.array }}
-        for r in ${array[@]};
-        do
-          release_name=$r-${{ steps.extract_branch.outputs.clean-branch }}
-          echo "uninstall -n ${NAMESPACE} $release_name"
-          # helm uninstall -n ${NAMESPACE} $release_name || exit_code=$?          
-        done
-      shell: bash
+    # - name: Uninstall Helm Release(s)
+    #   id: uninstall_helm_releases
+    #   if: always()
+    #   env:
+    #     NAMESPACE: ${{ inputs.namespace }}
+    #   run: |
+    #     array=${{ steps.release-names.outputs.array }}
+    #     for r in ${array[@]};
+    #     do
+    #       release_name=$r-${{ steps.extract_branch.outputs.clean-branch }}
+    #       echo "uninstall -n ${NAMESPACE} $release_name"
+    #       # helm uninstall -n ${NAMESPACE} $release_name || exit_code=$?          
+    #     done
+    #   shell: bash
  
-    - name: Delete CDK Stacks
-      id: delete_cdk
-      if: always()
-      env:
-        AWS_ACCOUNT_ID: ${{ inputs.aws-account-id }}
-        AWS_REGION: ${{ inputs.aws-region }}
-        BRANCH_NAME: ${{ steps.extract_branch.outputs.branch }}
-      shell: bash
-      run: |
-        echo "Delete CDK Stacks: $BRANCH_NAME"
-      # cd ${{ inputs.cdk-folder }}
-      # cdk destroy --all -f      
+    # - name: Delete CDK Stacks
+    #   id: delete_cdk
+    #   if: always()
+    #   env:
+    #     AWS_ACCOUNT_ID: ${{ inputs.aws-account-id }}
+    #     AWS_REGION: ${{ inputs.aws-region }}
+    #     BRANCH_NAME: ${{ steps.extract_branch.outputs.branch }}
+    #   shell: bash
+    #   run: |
+    #     echo "Delete CDK Stacks: $BRANCH_NAME"
+    #   # cd ${{ inputs.cdk-folder }}
+    #   # cdk destroy --all -f      
 
-    - name: Delete ECR Repository
-      id: delete_ecr      
-      if: always()
-      env:
-        AWS_ACCOUNT_ID: ${{ inputs.aws-account-id }}
-        AWS_REGION: ${{ inputs.aws-region }}
-        REPOSITORY_NAME: ${{ inputs.namespace }}/${{ steps.extract_branch.outputs.clean-branch }}
-      shell: bash
-      run: echo "aws ecr delete-repository --repository-name ${REPOSITORY_NAME} --force " 
-      # aws ecr delete-repository --repository-name "${REPOSITORY_NAME}" --force      
+    # - name: Delete ECR Repository
+    #   id: delete_ecr      
+    #   if: always()
+    #   env:
+    #     AWS_ACCOUNT_ID: ${{ inputs.aws-account-id }}
+    #     AWS_REGION: ${{ inputs.aws-region }}
+    #     REPOSITORY_NAME: ${{ inputs.namespace }}/${{ steps.extract_branch.outputs.clean-branch }}
+    #   shell: bash
+    #   run: echo "aws ecr delete-repository --repository-name ${REPOSITORY_NAME} --force " 
+    #   # aws ecr delete-repository --repository-name "${REPOSITORY_NAME}" --force      
 
-    - name: Delete Branch Database
-      shell: bash
-      if: ${{ inputs.delete-branch-db == true }}
-      env:
-        BRANCH_NAME: ${{ steps.extract_branch.outputs.branch }}
-      run: |
-        echo "Deleting branch database..."
-        aws lambda invoke --function-name DropOldDevDatabase --cli-binary-format raw-in-base64-out --payload '{ "dbname": "'"$BRANCH_NAME"'" }' response.json
+    # - name: Delete Branch Database
+    #   shell: bash
+    #   if: ${{ inputs.delete-branch-db == true }}
+    #   env:
+    #     BRANCH_NAME: ${{ steps.extract_branch.outputs.branch }}
+    #   run: |
+    #     echo "Deleting branch database..."
+    #     aws lambda invoke --function-name DropOldDevDatabase --cli-binary-format raw-in-base64-out --payload '{ "dbname": "'"$BRANCH_NAME"'" }' response.json
         
-        statusCode=$(cat response.json | jq .StatusCode)
-        if [ "$statusCode" != 200 ]
-        then 
-          errorOccurred=true
-        fi 
-        rm response.json
+    #     statusCode=$(cat response.json | jq .StatusCode)
+    #     if [ "$statusCode" != 200 ]
+    #     then 
+    #       errorOccurred=true
+    #     fi 
+    #     rm response.json
       
