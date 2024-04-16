@@ -1,6 +1,6 @@
 name: 'Delete Branch Resources'
 author: DevOps
-description: Run delete branch resources
+description: Delete branch resources
 
 inputs:
   branch-name:
@@ -11,9 +11,10 @@ inputs:
     required: true
   release-names-array:
     description: 'Release names array'
+    default: ''
     required: true
   delete-branch-db:
-    description: 'Delete branch'
+    description: 'Delete branch database'
     required: false
     default: false 
   aws-access-key-id:
@@ -103,8 +104,8 @@ runs:
         BRANCH_NAME: ${{ steps.extract_branch.outputs.branch }}
       run: |
         echo "Delete CDK Stacks: $BRANCH_NAME"
-      # cd ${{ inputs.cdk-folder }}
-      # cdk destroy --all -f
+        cd ${{ inputs.cdk-folder }}
+        cdk destroy --all -f
       shell: bash
 
     - name: Delete ECR Repository
@@ -115,14 +116,21 @@ runs:
         AWS_ACCOUNT_ID: ${{ inputs.aws-account-id }}
         AWS_REGION: ${{ inputs.aws-region }}
         REPOSITORY_NAME: ${{ inputs.namespace }}/${{ steps.extract_branch.outputs.clean-branch }}
-      run: echo "aws ecr delete-repository --repository-name "${REPOSITORY_NAME}" --force" 
-# aws ecr delete-repository --repository-name "${REPOSITORY_NAME}" --force      
+      run: aws ecr delete-repository --repository-name "${REPOSITORY_NAME}" --force      
 
     - name: Delete Branch Database
       shell: bash
       if: ${{ inputs.delete-branch-db == true }}
+      env:
+        BRANCH_NAME: ${{ steps.extract_branch.outputs.branch }}
       run: |
         echo "Deleting branch database..."
-        echo "./data/delete_branch_database.sh BuildUserDatabaseConnectionSettings ${{ steps.extract_branch.outputs.branch }}"
-# ./data/delete_branch_database.sh BuildUserDatabaseConnectionSettings ${{ steps.extract_branch.outputs.branch }}
+        aws lambda invoke --function-name DropOldDevDatabase --cli-binary-format raw-in-base64-out --payload '{ "dbname": "'"$BRANCH_NAME"'" }' response.json
+        
+        statusCode=$(cat response.json | jq .StatusCode)
+        if [ "$statusCode" != 200 ]
+        then 
+          errorOccurred=true
+        fi 
+        rm response.json
       
