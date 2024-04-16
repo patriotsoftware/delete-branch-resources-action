@@ -46,7 +46,7 @@ runs:
       namespace=${{ inputs.namespace }}
       passed=${{ inputs.release-names-array }}
       echo "$namespace"
-      echo "$passed"
+      echo "$passed[@]"
       # if [ -z "${passed}" ]; 
       # then        
       #   single="(\"${namespace}\")"
