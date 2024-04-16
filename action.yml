@@ -44,17 +44,15 @@ runs:
     shell: bash
     run: |
       namespace=${{ inputs.namespace }}
-      passed=${{ inputs.release-names-array }}
-      echo "$namespace"
-      echo "${passed[@]}"
-      # if [ -z "${passed}" ]; 
-      # then        
-      #   single="(\"${namespace}\")"
-      #   echo "$single"
-      #   echo "array=$single" >> $GITHUB_OUTPUT
-      # else
-      #   echo "array=$passed" >> $GITHUB_OUTPUT
-      # fi
+      passed=${{ inputs.release-names-array }}     
+      if [ -z "${passed}" ]; 
+      then        
+        single="($namespace)"
+        echo "$single"
+        echo "array=${single[@]}" >> $GITHUB_OUTPUT
+      else
+        echo "array=${passed[@]}" >> $GITHUB_OUTPUT
+      fi
 
     # - name: Extract branch name
     #   id: extract_branch
