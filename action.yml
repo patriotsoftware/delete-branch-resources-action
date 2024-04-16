@@ -45,41 +45,43 @@ runs:
     run: |
       namespace=${{ inputs.namespace }}
       passed=${{ inputs.release-names-array }}
-      if [ -z "${passed}" ]; 
-      then        
-        single="(\"${namespace}\")"
-        echo "$single"
-        echo "array=$single" >> $GITHUB_OUTPUT
-      else
-        echo "array=$passed" >> $GITHUB_OUTPUT
-      fi
+      echo "$namespace"
+      echo "$passed"
+      # if [ -z "${passed}" ]; 
+      # then        
+      #   single="(\"${namespace}\")"
+      #   echo "$single"
+      #   echo "array=$single" >> $GITHUB_OUTPUT
+      # else
+      #   echo "array=$passed" >> $GITHUB_OUTPUT
+      # fi
 
-    - name: Extract branch name
-      id: extract_branch
-      shell: bash
-      run: |
-        export UNESCAPED_BRANCH_NAME=${{ inputs.branch-name }}
-        echo "branch=$(echo ${UNESCAPED_BRANCH_NAME})" >> $GITHUB_OUTPUT | sed "s%refs\/heads\/%%g"
-        echo "clean-branch=$(echo ${UNESCAPED_BRANCH_NAME} | sed 's/_//g' | tr '[:upper:]' '[:lower:]' | cut -c -38)" >> $GITHUB_OUTPUT | sed "s%refs\/heads\/%%g" 
-        # The CDK needs the original unaltered branch name.
+    # - name: Extract branch name
+    #   id: extract_branch
+    #   shell: bash
+    #   run: |
+    #     export UNESCAPED_BRANCH_NAME=${{ inputs.branch-name }}
+    #     echo "branch=$(echo ${UNESCAPED_BRANCH_NAME})" >> $GITHUB_OUTPUT | sed "s%refs\/heads\/%%g"
+    #     echo "clean-branch=$(echo ${UNESCAPED_BRANCH_NAME} | sed 's/_//g' | tr '[:upper:]' '[:lower:]' | cut -c -38)" >> $GITHUB_OUTPUT | sed "s%refs\/heads\/%%g" 
+    #     # The CDK needs the original unaltered branch name.
         
-    - name: Branch Outputs
-      run: |
-        echo ${{ steps.extract_branch.outputs.clean-branch }}
-        echo ${{ steps.extract_branch.outputs.branch }}
-      shell: bash
+    # - name: Branch Outputs
+    #   run: |
+    #     echo ${{ steps.extract_branch.outputs.clean-branch }}
+    #     echo ${{ steps.extract_branch.outputs.branch }}
+    #   shell: bash
   
-    - name: Checkout code
-      id: checkout_code
-      uses: actions/checkout@v4
+    # - name: Checkout code
+    #   id: checkout_code
+    #   uses: actions/checkout@v4
 
-    - name: Authenticate with DEV
-      id: authenticate_dev
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        aws-access-key-id: ${{ inputs.aws-access-key-id }}
-        aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
-        aws-region: ${{ inputs.aws-region }}
+    # - name: Authenticate with DEV
+    #   id: authenticate_dev
+    #   uses: aws-actions/configure-aws-credentials@v4
+    #   with:
+    #     aws-access-key-id: ${{ inputs.aws-access-key-id }}
+    #     aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
+    #     aws-region: ${{ inputs.aws-region }}
 
     # - name: Uninstall Helm Release(s)
     #   id: uninstall_helm_releases
