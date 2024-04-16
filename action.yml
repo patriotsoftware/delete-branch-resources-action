@@ -52,7 +52,7 @@ runs:
     shell: bash
     run: |
       branch_name=${{ steps.extract_branch.outputs.branch }}
-      if [[ ("$branch_name" == "spg-2209-s3") || ("$branch_name" == "master") || ("$branch_name" == "_InitialSolutionRename") ]];
+      if [[ ("$branch_name" == "main") || ("$branch_name" == "master") || ("$branch_name" == "_InitialSolutionRename") ]];
       then
         echo "Validation failed. $branch_name resources cannot be deleted."
         exit 1
@@ -89,50 +89,50 @@ runs:
       aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
       aws-region: ${{ inputs.aws-region }}
 
-  # - name: Uninstall Helm Release(s)
-  #   id: uninstall_helm_releases
-  #   if: always()
-  #   env:
-  #     NAMESPACE: ${{ inputs.namespace }}
-  #   shell: bash
-  #   run: |
-  #     for r in ${{ steps.release-names.outputs.array }};
-  #     do
-  #       release_name=$r-${{ steps.extract_branch.outputs.clean-branch }}
-  #       echo "uninstall -n ${NAMESPACE} $release_name"
-  #       helm uninstall -n ${NAMESPACE} $release_name || exit_code=$?          
-  #     done    
+  - name: Uninstall Helm Release(s)
+    id: uninstall_helm_releases
+    if: always()
+    env:
+      NAMESPACE: ${{ inputs.namespace }}
+    shell: bash
+    run: |
+      for r in ${{ steps.release-names.outputs.array }};
+      do
+        release_name=$r-${{ steps.extract_branch.outputs.clean-branch }}
+        echo "uninstall -n ${NAMESPACE} $release_name"
+        helm uninstall -n ${NAMESPACE} $release_name || exit_code=$?          
+      done    
 
-  # - name: Delete CDK Stacks
-  #   id: delete_cdk
-  #   if: always()
-  #   env:
-  #     AWS_ACCOUNT_ID: ${{ inputs.aws-account-id }}
-  #     AWS_REGION: ${{ inputs.aws-region }}
-  #     BRANCH_NAME: ${{ steps.extract_branch.outputs.branch }}
-  #   shell: bash
-  #   run: |
-  #     echo "Delete CDK Stacks: $BRANCH_NAME"
-  #     cd ${{ inputs.cdk-folder }}
-  #     cdk destroy --all -f      
+  - name: Delete CDK Stacks
+    id: delete_cdk
+    if: always()
+    env:
+      AWS_ACCOUNT_ID: ${{ inputs.aws-account-id }}
+      AWS_REGION: ${{ inputs.aws-region }}
+      BRANCH_NAME: ${{ steps.extract_branch.outputs.branch }}
+    shell: bash
+    run: |
+      echo "Delete CDK Stacks: $BRANCH_NAME"
+      cd ${{ inputs.cdk-folder }}
+      cdk destroy --all -f      
 
-  # - name: Delete ECR Repository
-  #   id: delete_ecr      
-  #   if: always()
-  #   env:
-  #     AWS_ACCOUNT_ID: ${{ inputs.aws-account-id }}
-  #     AWS_REGION: ${{ inputs.aws-region }}
-  #     REPOSITORY_NAME: ${{ inputs.namespace }}/${{ steps.extract_branch.outputs.clean-branch }}
-  #   shell: bash
-  #   run: |
-  #     echo "aws ecr delete-repository --repository-name ${REPOSITORY_NAME} --force " 
-  #     aws ecr delete-repository --repository-name "${REPOSITORY_NAME}" --force      
+  - name: Delete ECR Repository
+    id: delete_ecr      
+    if: always()
+    env:
+      AWS_ACCOUNT_ID: ${{ inputs.aws-account-id }}
+      AWS_REGION: ${{ inputs.aws-region }}
+      REPOSITORY_NAME: ${{ inputs.namespace }}/${{ steps.extract_branch.outputs.clean-branch }}
+    shell: bash
+    run: |
+      echo "aws ecr delete-repository --repository-name ${REPOSITORY_NAME} --force " 
+      aws ecr delete-repository --repository-name "${REPOSITORY_NAME}" --force      
 
-  # - name: Delete Branch Database
-  #   shell: bash
-  #   if: ${{ inputs.delete-branch-db == true }}
-  #   env:
-  #     BRANCH_NAME: ${{ steps.extract_branch.outputs.branch }}
-  #   run: |
-  #     echo "Deleting branch database..."
-  #     ./data/delete_branch_database.sh BuildUserDatabaseConnectionSettings $BRANCH_NAME
+  - name: Delete Branch Database
+    shell: bash
+    if: ${{ inputs.delete-branch-db == true }}
+    env:
+      BRANCH_NAME: ${{ steps.extract_branch.outputs.branch }}
+    run: |
+      echo "Deleting branch database..."
+      ./data/delete_branch_database.sh BuildUserDatabaseConnectionSettings $BRANCH_NAME
