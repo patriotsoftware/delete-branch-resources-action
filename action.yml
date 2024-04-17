@@ -68,7 +68,7 @@ runs:
     id: release-names
     shell: bash
     run: |
-      default_release="(${{ inputs.namespace }})"      
+      default_release="(\"${{ inputs.namespace }}\")"      
       release_names=${{ inputs.release-names-array }}     
       if [ -z "${release_names}" ]; 
       then
