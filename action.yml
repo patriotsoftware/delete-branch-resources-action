@@ -87,22 +87,6 @@ runs:
       aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
       aws-region: ${{ inputs.aws-region }}
 
-  - name: Uninstall Helm using release names
-    id: uninstall_helm_releases
-    if: ${{ (steps.release-name.outputs.use-default == false) && always() }}
-    env:
-      NAMESPACE: ${{ inputs.namespace }}
-    shell: bash
-    run: |
-      echo "Uninstall Helm using release names array"
-      release_names=${{ inputs.release-names-array }}
-      for r in ${release_names[@]};
-      do
-        release_name=$r-${{ steps.extract_branch.outputs.clean-branch }}
-        echo "uninstall -n ${NAMESPACE} $release_name"
-        # helm uninstall -n ${NAMESPACE} $release_name || exit_code=$?          
-      done
-  
   - name: Uninstall Helm using default release name
     id: uninstall_default_helm
     if: ${{ steps.release-name.outputs.use-default && always() }}
@@ -110,10 +94,24 @@ runs:
       NAMESPACE: ${{ inputs.namespace }}
     shell: bash
     run: |
-      echo "Uninstall default helm"
       release_name=${NAMESPACE}-${{ steps.extract_branch.outputs.clean-branch }}
       echo "uninstall -n ${NAMESPACE} $release_name"
-      # helm uninstall -n ${NAMESPACE} $release_name || exit_code=$?         
+      helm uninstall -n ${NAMESPACE} $release_name || exit_code=$? 
+
+  - name: Uninstall Helm using release names
+    id: uninstall_helm_releases
+    if: ${{ (steps.release-name.outputs.use-default == false) && always() }}
+    env:
+      NAMESPACE: ${{ inputs.namespace }}
+    shell: bash
+    run: |
+      release_names=${{ inputs.release-names-array }}
+      for r in ${release_names[@]};
+      do
+        release_name=$r-${{ steps.extract_branch.outputs.clean-branch }}
+        echo "uninstall -n ${NAMESPACE} $release_name"
+        helm uninstall -n ${NAMESPACE} $release_name || exit_code=$?          
+      done        
 
   - name: Delete CDK Stacks
     id: delete_cdk
