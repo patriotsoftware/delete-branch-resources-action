@@ -64,17 +64,15 @@ runs:
       echo ${{ steps.extract_branch.outputs.branch }}
     shell: bash
 
-  - name: Set release names array
-    id: release-names
+  - name: Release names check
+    id: release-name
     shell: bash
-    run: |
-      default_release="(\"${{ inputs.namespace }}\")"      
-      release_names=${{ inputs.release-names-array }}     
-      if [ -z "${release_names}" ]; 
+    run: |     
+      if [ -z "${{ inputs.release-names-array }}" ]; 
       then
-        echo "array=${default_release[@]}" >> $GITHUB_OUTPUT
+        echo "use-default=false" >> $GITHUB_OUTPUT
       else
-        echo "array=${release_names[@]}" >> $GITHUB_OUTPUT
+        echo "use-default=true" >> $GITHUB_OUTPUT
       fi
 
   - name: Checkout code
@@ -89,19 +87,33 @@ runs:
       aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
       aws-region: ${{ inputs.aws-region }}
 
-  - name: Uninstall Helm Release(s)
+  - name: Uninstall Helm using release names
     id: uninstall_helm_releases
-    if: always()
+    if: ${{ (steps.release-name.outputs.use-default == false) && always() }}
     env:
       NAMESPACE: ${{ inputs.namespace }}
     shell: bash
     run: |
-      for r in ${{ steps.release-names.outputs.array }};
-      do
-        release_name=$r-${{ steps.extract_branch.outputs.clean-branch }}
-        echo "uninstall -n ${NAMESPACE} $release_name"
-        helm uninstall -n ${NAMESPACE} $release_name || exit_code=$?          
-      done    
+      echo "Use release names"
+      # release_names=${{ inputs.release-names-array }}
+      # for r in ${release_names[@]};
+      # do
+      #   release_name=$r-${{ steps.extract_branch.outputs.clean-branch }}
+      #   echo "uninstall -n ${NAMESPACE} $release_name"
+      #   helm uninstall -n ${NAMESPACE} $release_name || exit_code=$?          
+      # done
+  
+  - name: Uninstall Helm using default release name
+    id: uninstall_default_helm
+    if: ${{ steps.release-name.outputs.use-default && always() }}
+    env:
+      NAMESPACE: ${{ inputs.namespace }}
+    shell: bash
+    run: |
+      echo "Use release names"
+      #   release_name=$r-${{ steps.extract_branch.outputs.clean-branch }}
+      #   echo "uninstall -n ${NAMESPACE} $release_name"
+      #   helm uninstall -n ${NAMESPACE} $release_name || exit_code=$?         
 
   - name: Delete CDK Stacks
     id: delete_cdk
