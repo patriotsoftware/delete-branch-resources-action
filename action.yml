@@ -16,7 +16,7 @@ inputs:
   delete-branch-db:
     description: 'Delete branch database'
     required: false
-    default: false 
+    default: 'false' 
   aws-access-key-id:
     description: 'AWS Access Key ID'
     required: true
@@ -40,16 +40,15 @@ runs:
   using: 'composite'
   steps:  
   - name: Extract branch name
-    id: extract_branch
-    shell: bash
+    id: extract_branch    
     run: |
       export UNESCAPED_BRANCH_NAME=${{ inputs.branch-name }}
       echo "branch=$(echo ${UNESCAPED_BRANCH_NAME})" >> $GITHUB_OUTPUT | sed "s%refs\/heads\/%%g"
       echo "clean-branch=$(echo ${UNESCAPED_BRANCH_NAME} | sed 's/_//g' | tr '[:upper:]' '[:lower:]' | cut -c -38)" >> $GITHUB_OUTPUT | sed "s%refs\/heads\/%%g" 
       # The CDK needs the original unaltered branch name.
-      
-  - name: Branch Validation
     shell: bash
+      
+  - name: Branch Validation    
     run: |
       branch_name=${{ steps.extract_branch.outputs.branch }}
       if [[ ("$branch_name" == "main") || ("$branch_name" == "master") || ("$branch_name" == "_InitialSolutionRename") ]];
@@ -57,6 +56,7 @@ runs:
         echo "Validation failed. BRANCH=$branch_name resources cannot be deleted."
         exit 1
       fi
+    shell: bash
      
   - name: Branch Outputs
     run: |
@@ -65,8 +65,7 @@ runs:
     shell: bash
 
   - name: Release names check
-    id: release-name
-    shell: bash
+    id: release-name    
     run: |     
       if [ -z "${{ inputs.release-names-array }}" ]; 
       then
@@ -74,6 +73,7 @@ runs:
       else
         echo "use-default=true" >> $GITHUB_OUTPUT
       fi
+    shell: bash
 
   - name: Checkout code
     id: checkout_code
@@ -91,19 +91,18 @@ runs:
     id: uninstall_default_helm
     if: ${{ steps.release-name.outputs.use-default && always() }}
     env:
-      NAMESPACE: ${{ inputs.namespace }}
-    shell: bash
+      NAMESPACE: ${{ inputs.namespace }}    
     run: |
       release_name=${NAMESPACE}-${{ steps.extract_branch.outputs.clean-branch }}
       echo "uninstall -n ${NAMESPACE} $release_name"
-      helm uninstall -n ${NAMESPACE} $release_name || exit_code=$? 
+      helm uninstall -n ${NAMESPACE} $release_name || exit_code=$?
+    shell: bash 
 
   - name: Uninstall Helm using release names
     id: uninstall_helm_releases
     if: ${{ (steps.release-name.outputs.use-default == false) && always() }}
     env:
-      NAMESPACE: ${{ inputs.namespace }}
-    shell: bash
+      NAMESPACE: ${{ inputs.namespace }}    
     run: |
       release_names=${{ inputs.release-names-array }}
       for r in ${release_names[@]};
@@ -111,7 +110,8 @@ runs:
         release_name=$r-${{ steps.extract_branch.outputs.clean-branch }}
         echo "uninstall -n ${NAMESPACE} $release_name"
         helm uninstall -n ${NAMESPACE} $release_name || exit_code=$?          
-      done        
+      done
+    shell: bash
 
   - name: Delete CDK Stacks
     id: delete_cdk
@@ -119,12 +119,12 @@ runs:
     env:
       AWS_ACCOUNT_ID: ${{ inputs.aws-account-id }}
       AWS_REGION: ${{ inputs.aws-region }}
-      BRANCH_NAME: ${{ steps.extract_branch.outputs.branch }}
-    shell: bash
+      BRANCH_NAME: ${{ steps.extract_branch.outputs.branch }}    
     run: |
       echo "Delete CDK Stacks: $BRANCH_NAME"
       cd ${{ inputs.cdk-folder }}
-      cdk destroy --all -f      
+      cdk destroy --all -f
+    shell: bash
 
   - name: Delete ECR Repository
     id: delete_ecr      
@@ -132,8 +132,7 @@ runs:
     env:
       AWS_ACCOUNT_ID: ${{ inputs.aws-account-id }}
       AWS_REGION: ${{ inputs.aws-region }}
-      REPOSITORY_NAME: ${{ inputs.namespace }}/${{ steps.extract_branch.outputs.clean-branch }}
-    shell: bash
+      REPOSITORY_NAME: ${{ inputs.namespace }}/${{ steps.extract_branch.outputs.clean-branch }}    
     run: |
       if aws ecr describe-repositories --repository-names "$REPOSITORY_NAME" --region "$AWS_REGION" >/dev/null 2>&1; then
         echo "Repository exists. Proceeding with delete."
@@ -141,13 +140,14 @@ runs:
         aws ecr delete-repository --repository-name "${REPOSITORY_NAME}" --force 
       else
         echo "Repository does not exist. No action taken."
-      fi     
-
-  - name: Delete Branch Database
+      fi
     shell: bash
-    if: ${{ (inputs.delete-branch-db == true) && always() }}
+
+  - name: Delete Branch Database    
+    if: ${{ (inputs.delete-branch-db == 'true') && always() }}
     env:
       BRANCH_NAME: ${{ steps.extract_branch.outputs.branch }}
     run: |
       echo "Deleting branch database..."
       ./data/delete_branch_database.sh BuildUserDatabaseConnectionSettings $BRANCH_NAME
+    shell: bash
