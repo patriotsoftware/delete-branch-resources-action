@@ -150,4 +150,5 @@ runs:
     run: |
       echo "Deleting branch database..."
       ./data/delete_branch_database.sh BuildUserDatabaseConnectionSettings $BRANCH_NAME
+      exit 0
     shell: bash
