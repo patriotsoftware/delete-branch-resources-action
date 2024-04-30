@@ -39,16 +39,6 @@ inputs:
 runs:
   using: 'composite'
   steps:  
-  - name: Branch Name
-    run: |
-      branch_name=${{ inputs.branch-name }}
-      if [ ("$branch_name" == "") ];
-      then
-        echo "Branch name is empty."
-        exit 0
-      fi
-    shell: bash
-    
   - name: Extract branch name
     id: extract_branch    
     run: |
