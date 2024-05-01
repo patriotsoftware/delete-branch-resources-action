@@ -149,5 +149,5 @@ runs:
       BRANCH_NAME: ${{ steps.extract_branch.outputs.branch }}
     run: |
       echo "Deleting branch database..."
-      ./data/delete_branch_database.sh BuildUserDatabaseConnectionSettings $BRANCH_NAME || true
+      ${{ github.action_path }}/data/delete_branch_database.sh BuildUserDatabaseConnectionSettings $BRANCH_NAME || true
     shell: bash
