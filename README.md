@@ -5,14 +5,17 @@ Action intended to be called from delete branch cleanup.
 
 ## Parameters
 
-#### 'branch-name' required)
+#### 'branch-name' (required)
 Branch name github.event.ref.
 
-#### 'namespace' required)
+#### 'namespace' (required)
 Namespace used by the repo and required for the helm uninstall command.
 
-#### 'release-names-array' required)
+#### 'release-names-array'
 Array containing release names in this format with quotation marks, space delimited.
+
+#### 'ui-repo-name'
+UI repository name or github.event.repository.name.
 
 #### 'delete-branch-db'
 Optional parameter to also delete the associated branch database.
@@ -23,6 +26,14 @@ The AWS access key id, should always be for dev.
 #### 'aws-secret-access-key' (required)
 The AWS secret access key, should always be for dev.
 
+#### 'aws-account-id' 
+The AWS Account ID, should always be for dev.
+
+#### 'aws-region' 
+The AWS Region, should typically be us-east-1.
+
+#### 'cdk-folder'
+CDK folder path. Default is deploy.
 
 ## Sample Use
 

@@ -4,15 +4,19 @@ description: Delete branch resources
 
 inputs:
   branch-name:
-    description: 'Branch name or github.event.ref'
+    description: 'Branch name (github.event.ref)'
     required: true
   namespace:
     description: 'Helm namespace'
     required: true
   release-names-array:
     description: 'Release names array'
+    default: ()
+    required: false
+  ui-repo-name:
+    description: 'UI repository name (github.event.repository.name)'
     default: ''
-    required: true
+    required: false
   delete-branch-db:
     description: 'Delete branch database'
     required: false
@@ -38,14 +42,23 @@ inputs:
     
 runs:
   using: 'composite'
-  steps:  
+  steps:    
   - name: Extract branch name
     id: extract_branch    
     run: |
       export UNESCAPED_BRANCH_NAME=${{ inputs.branch-name }}
-      echo "branch=$(echo ${UNESCAPED_BRANCH_NAME})" >> $GITHUB_OUTPUT | sed "s%refs\/heads\/%%g"
-      echo "clean-branch=$(echo ${UNESCAPED_BRANCH_NAME} | sed 's/_//g' | tr '[:upper:]' '[:lower:]' | cut -c -38)" >> $GITHUB_OUTPUT | sed "s%refs\/heads\/%%g" 
+      branch=$(echo "$UNESCAPED_BRANCH_NAME" | sed "s%refs\/heads\/%%g")
+      clean_branch=$(echo "$branch" | sed "s/_//g" | tr "[:upper:]" "[:lower:]" | cut -c -38)
+      echo "branch=$branch" >> $GITHUB_OUTPUT
+      echo "clean-branch=$clean_branch" >> $GITHUB_OUTPUT
       # The CDK needs the original unaltered branch name.
+    shell: bash
+
+  - name: Versioned Branch Alert
+    if: ${{ startsWith(inputs.branch-name, 'v') }}
+    run: |
+      echo "** Versioned Branch Alert ** (no action)"
+      exit 1
     shell: bash
       
   - name: Branch Validation    
@@ -66,8 +79,9 @@ runs:
 
   - name: Release names check
     id: release-name    
-    run: |     
-      if [ -z "${{ inputs.release-names-array }}" ]; 
+    run: |
+      array=${{ inputs.release-names-array }}
+      if [[ ${array[@]} ]];
       then
         echo "Using release names array"
         echo "use-default=false" >> $GITHUB_OUTPUT
@@ -89,9 +103,17 @@ runs:
       aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
       aws-region: ${{ inputs.aws-region }}
 
+  - name: Remove Branched S3 Objects
+    if: ${{ inputs.ui-repo-name != '' }}
+    run: |
+      base_url="dev-static.patriotsoftware.com"
+      app_endpoint=$(echo '${{ inputs.ui-repo-name }}/${{ steps.extract_branch.outputs.clean-branch }}')"
+      echo "aws s3 rm s3://ps-static-dev/$app_endpoint --recursive"
+    shell: bash
+
   - name: Uninstall Helm using default release name
     id: uninstall_default_helm
-    if: ${{ steps.release-name.outputs.use-default && always() }}
+    if: ${{ (steps.release-name.outputs.use-default == 'true') && always() }}
     env:
       NAMESPACE: ${{ inputs.namespace }}    
     run: |
@@ -103,7 +125,7 @@ runs:
 
   - name: Uninstall Helm using release names
     id: uninstall_helm_releases
-    if: ${{ (steps.release-name.outputs.use-default == false) && always() }}
+    if: ${{ (steps.release-name.outputs.use-default == 'false') && always() }}
     env:
       NAMESPACE: ${{ inputs.namespace }}    
     run: |
@@ -119,7 +141,7 @@ runs:
 
   - name: Delete CDK Stacks
     id: delete_cdk
-    if: always()
+    if: ${{ (inputs.ui-repo-name == '') && always() }}
     env:
       AWS_ACCOUNT_ID: ${{ inputs.aws-account-id }}
       AWS_REGION: ${{ inputs.aws-region }}
@@ -132,7 +154,7 @@ runs:
 
   - name: Delete ECR Repository
     id: delete_ecr      
-    if: always()
+    if: ${{ (inputs.ui-repo-name == '') && always() }}
     env:
       AWS_ACCOUNT_ID: ${{ inputs.aws-account-id }}
       AWS_REGION: ${{ inputs.aws-region }}
@@ -148,7 +170,7 @@ runs:
     shell: bash
 
   - name: Delete Branch Database    
-    if: ${{ (inputs.delete-branch-db == 'true') && always() }}
+    if: ${{ (inputs.ui-repo-name == '') && (inputs.delete-branch-db == 'true') && always() }}
     env:
       BRANCH_NAME: ${{ steps.extract_branch.outputs.branch }}
     run: |
