@@ -69,8 +69,10 @@ runs:
     run: |     
       if [ -z "${{ inputs.release-names-array }}" ]; 
       then
+        echo "Using release names array"
         echo "use-default=false" >> $GITHUB_OUTPUT
       else
+        echo "Using default release name"
         echo "use-default=true" >> $GITHUB_OUTPUT
       fi
     shell: bash
@@ -93,6 +95,7 @@ runs:
     env:
       NAMESPACE: ${{ inputs.namespace }}    
     run: |
+      echo "Uninstall Helm using default release name"
       release_name=${NAMESPACE}-${{ steps.extract_branch.outputs.clean-branch }}
       echo "uninstall -n ${NAMESPACE} $release_name"
       helm uninstall -n ${NAMESPACE} $release_name || exit_code=$?
@@ -104,6 +107,7 @@ runs:
     env:
       NAMESPACE: ${{ inputs.namespace }}    
     run: |
+      echo "Uninstall Helm using release names"
       release_names=${{ inputs.release-names-array }}
       for r in ${release_names[@]};
       do
