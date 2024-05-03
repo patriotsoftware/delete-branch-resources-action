@@ -2,6 +2,8 @@ name: Delete Branch Resources
 author: DevOps
 description: Delete branch resources
 
+# (steps.branch-validation.conclusion == 'success') instead of always() to ensure we have a valid branch
+
 inputs:
   branch-name:
     description: 'Branch name (github.event.ref)'
@@ -61,7 +63,8 @@ runs:
       exit 1
     shell: bash
       
-  - name: Branch Validation    
+  - name: Branch Validation
+    id: branch-validation    
     run: |
       branch_name=${{ steps.extract_branch.outputs.branch }}
       if [[ ("$branch_name" == "main") || ("$branch_name" == "master") || ("$branch_name" == "_InitialSolutionRename") ]];
@@ -113,7 +116,7 @@ runs:
 
   - name: Uninstall Helm using default release name
     id: uninstall_default_helm
-    if: ${{ (steps.release-name.outputs.use-default == 'true') && always() }}
+    if: ${{ (steps.release-name.outputs.use-default == 'true') && (steps.branch-validation.conclusion == 'success') }}
     env:
       NAMESPACE: ${{ inputs.namespace }}    
     run: |
@@ -125,7 +128,7 @@ runs:
 
   - name: Uninstall Helm using release names
     id: uninstall_helm_releases
-    if: ${{ (steps.release-name.outputs.use-default == 'false') && always() }}
+    if: ${{ (steps.release-name.outputs.use-default == 'false') && (steps.branch-validation.conclusion == 'success') }}
     env:
       NAMESPACE: ${{ inputs.namespace }}    
     run: |
@@ -141,7 +144,7 @@ runs:
 
   - name: Delete CDK Stacks
     id: delete_cdk
-    if: ${{ (inputs.ui-repo-name == '') && always() }}
+    if: ${{ (inputs.ui-repo-name == '') && (steps.branch-validation.conclusion == 'success') }}
     env:
       AWS_ACCOUNT_ID: ${{ inputs.aws-account-id }}
       AWS_REGION: ${{ inputs.aws-region }}
@@ -154,7 +157,7 @@ runs:
 
   - name: Delete ECR Repository
     id: delete_ecr      
-    if: ${{ (inputs.ui-repo-name == '') && always() }}
+    if: ${{ (inputs.ui-repo-name == '') && (steps.branch-validation.conclusion == 'success') }}
     env:
       AWS_ACCOUNT_ID: ${{ inputs.aws-account-id }}
       AWS_REGION: ${{ inputs.aws-region }}
@@ -170,7 +173,7 @@ runs:
     shell: bash
 
   - name: Delete Branch Database    
-    if: ${{ (inputs.ui-repo-name == '') && (inputs.delete-branch-db == 'true') && always() }}
+    if: ${{ (inputs.ui-repo-name == '') && (inputs.delete-branch-db == 'true') && (steps.branch-validation.conclusion == 'success') }}
     env:
       BRANCH_NAME: ${{ steps.extract_branch.outputs.branch }}
     run: |
