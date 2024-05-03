@@ -122,7 +122,7 @@ runs:
     run: |
       echo "Uninstall Helm using default release name"
       release_name=${NAMESPACE}-${{ steps.extract_branch.outputs.clean-branch }}
-      echo "uninstall -n ${NAMESPACE} $release_name"
+      echo "$release_name -n ${NAMESPACE}"
       helm uninstall -n ${NAMESPACE} $release_name || exit_code=$?
     shell: bash 
 
@@ -137,7 +137,7 @@ runs:
       for r in ${release_names[@]};
       do
         release_name=$r-${{ steps.extract_branch.outputs.clean-branch }}
-        echo "uninstall -n ${NAMESPACE} $release_name"
+        echo "$release_name -n ${NAMESPACE}"
         helm uninstall -n ${NAMESPACE} $release_name || exit_code=$?          
       done
     shell: bash
@@ -164,11 +164,11 @@ runs:
       REPOSITORY_NAME: ${{ inputs.namespace }}/${{ steps.extract_branch.outputs.clean-branch }}    
     run: |
       if aws ecr describe-repositories --repository-names "$REPOSITORY_NAME" --region "$AWS_REGION" >/dev/null 2>&1; then
-        echo "Repository exists. Proceeding with delete."
+        echo "ECR Repository exists. Proceeding with delete."
         echo "aws ecr delete-repository --repository-name ${REPOSITORY_NAME} --force " 
         aws ecr delete-repository --repository-name "${REPOSITORY_NAME}" --force 
       else
-        echo "Repository does not exist. No action taken."
+        echo "ECR Repository does not exist. No action taken."
       fi
     shell: bash
 
@@ -177,6 +177,6 @@ runs:
     env:
       BRANCH_NAME: ${{ steps.extract_branch.outputs.branch }}
     run: |
-      echo "Deleting branch database..."
+      echo "Deleting branch database $BRANCH_NAME..."
       ${{ github.action_path }}/data/delete_branch_database.sh BuildUserDatabaseConnectionSettings $BRANCH_NAME || true
     shell: bash
