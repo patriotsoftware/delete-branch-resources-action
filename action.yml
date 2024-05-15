@@ -155,7 +155,7 @@ runs:
     run: |
       echo "Delete CDK Stacks: $BRANCH_NAME"
       cd ${{ inputs.cdk-folder }}
-      cdk destroy --all -f
+      cdk destroy --all -f || true
     shell: bash
 
   - name: Delete ECR Repository
