@@ -37,6 +37,10 @@ inputs:
     description: 'AWS Region'
     default: 'us-east-1'
     required: false
+  recursive-custom-token:
+    description: 'Custom GitHub access token for recursive code checkout'
+    default: ''
+    required: false
   cdk-folder:
     description: 'CDK folder path. Default is deploy.'
     required: false
@@ -101,8 +105,15 @@ runs:
       fi
     shell: bash
 
-  - name: Checkout code
-    id: checkout_code
+  - name: Custom Recursive Code Checkout
+    if: ${{ inputs.recursive-custom-token != '' }}
+    uses: actions/checkout@v4
+    with:
+      token: ${{ inputs.recursive-custom-token }}
+      submodules: recursive
+
+  - name: Code Checkout
+    if: ${{ inputs.recursive-custom-token == '' }}
     uses: actions/checkout@v4
 
   - name: Authenticate with DEV

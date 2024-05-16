@@ -32,6 +32,9 @@ The AWS Account ID, should always be for dev.
 #### 'aws-region' 
 The AWS Region, should typically be us-east-1.
 
+#### 'recursive-custom-token'
+Custom GitHub access token for recursive code checkout.
+
 #### 'cdk-folder'
 CDK folder path. Default is deploy.
 
