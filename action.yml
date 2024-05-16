@@ -41,7 +41,11 @@ inputs:
     description: 'CDK folder path. Default is deploy.'
     required: false
     default: 'deploy'
-    
+  stack-name:
+    description: 'Delete only specified CDk Stack.'
+    required: false
+    default: ''
+
 runs:
   using: 'composite'
   steps:    
@@ -151,11 +155,20 @@ runs:
     env:
       AWS_ACCOUNT_ID: ${{ inputs.aws-account-id }}
       AWS_REGION: ${{ inputs.aws-region }}
-      BRANCH_NAME: ${{ steps.extract_branch.outputs.branch }}    
+      BRANCH_NAME: ${{ steps.extract_branch.outputs.branch }}
+      STACK_NAME: ${{ inputs.stack-name }}    
+    continue-on-error: true
     run: |
       echo "Delete CDK Stacks: $BRANCH_NAME"
       cd ${{ inputs.cdk-folder }}
-      cdk destroy --all -f || true
+      if [[ "${{ inputs.stack-name }}" == "" ]];
+      then
+        echo "destroy all stacks"
+        cdk destroy --all -f
+      else
+        echo "destroy only $STACK_NAME-$BRANCH_NAME"
+        cdk destroy $STACK_NAME-$BRANCH_NAME -e -f
+      fi
     shell: bash
 
   - name: Delete ECR Repository
