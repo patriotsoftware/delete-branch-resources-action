@@ -35,6 +35,9 @@ The AWS Region, should typically be us-east-1.
 #### 'cdk-folder'
 CDK folder path. Default is deploy.
 
+#### 'stack-name'
+Optional. Specify a CDK stack name that will be used to only delete that stack.
+
 ## Sample Use
 
 from GitHub delete branch action
