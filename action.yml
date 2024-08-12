@@ -8,9 +8,15 @@ inputs:
   branch-name:
     description: 'Branch name (github.event.ref)'
     required: true
+  aws-access-key-id:
+    description: 'AWS Access Key ID'
+    required: true
+  aws-secret-access-key:
+    description: 'AWS Secret Access Key'
+    required: true
   namespace:
     description: 'Helm namespace'
-    required: true
+    required: false
   release-names-array:
     description: 'Release names array'
     default: ()
@@ -22,13 +28,7 @@ inputs:
   delete-branch-db:
     description: 'Delete branch database'
     required: false
-    default: 'false' 
-  aws-access-key-id:
-    description: 'AWS Access Key ID'
-    required: true
-  aws-secret-access-key:
-    description: 'AWS Secret Access Key'
-    required: true
+    default: 'false'  
   aws-account-id:
     description: 'AWS Account ID'
     default: '305628290583'
@@ -68,7 +68,7 @@ runs:
     shell: bash
 
   - name: Versioned Branch Alert
-    if: ${{ startsWith(inputs.branch-name, 'v') }}
+    if: startsWith(inputs.branch-name, 'v')
     run: |
       echo "** Versioned Branch Alert ** (no action)"
       exit 1
@@ -106,14 +106,14 @@ runs:
     shell: bash
 
   - name: Custom Recursive Code Checkout
-    if: ${{ inputs.recursive-custom-token != '' }}
+    if: inputs.recursive-custom-token != ''
     uses: actions/checkout@v4
     with:
       token: ${{ inputs.recursive-custom-token }}
       submodules: recursive
 
   - name: Code Checkout
-    if: ${{ inputs.recursive-custom-token == '' }}
+    if: inputs.recursive-custom-token == ''
     uses: actions/checkout@v4
 
   - name: Authenticate with DEV
@@ -125,7 +125,7 @@ runs:
       aws-region: ${{ inputs.aws-region }}
 
   - name: Remove Branched S3 Objects
-    if: ${{ inputs.ui-repo-name != '' }}
+    if: inputs.ui-repo-name != ''
     run: |
       base_url="dev-static.patriotsoftware.com"
       app_endpoint=$(echo '${{ inputs.ui-repo-name }}/${{ steps.extract_branch.outputs.clean-branch }}')"
@@ -134,7 +134,10 @@ runs:
 
   - name: Uninstall Helm using default release name
     id: uninstall_default_helm
-    if: ${{ (steps.release-name.outputs.use-default == 'true') && (steps.branch-validation.conclusion == 'success') }}
+    if: |
+      (inputs.ui-repo-name == '') &&
+      (steps.release-name.outputs.use-default == 'true') && 
+      (steps.branch-validation.conclusion == 'success')      
     env:
       NAMESPACE: ${{ inputs.namespace }}    
     run: |
@@ -146,7 +149,10 @@ runs:
 
   - name: Uninstall Helm using release names
     id: uninstall_helm_releases
-    if: ${{ (steps.release-name.outputs.use-default == 'false') && (steps.branch-validation.conclusion == 'success') }}
+    if: |
+      (inputs.ui-repo-name == '') &&
+      (steps.release-name.outputs.use-default == 'false') && 
+      (steps.branch-validation.conclusion == 'success')
     env:
       NAMESPACE: ${{ inputs.namespace }}    
     run: |
@@ -162,7 +168,7 @@ runs:
 
   - name: Delete CDK Stacks
     id: delete_cdk
-    if: ${{ (inputs.ui-repo-name == '') && (steps.branch-validation.conclusion == 'success') }}
+    if: (inputs.ui-repo-name == '') && (steps.branch-validation.conclusion == 'success')
     env:
       AWS_ACCOUNT_ID: ${{ inputs.aws-account-id }}
       AWS_REGION: ${{ inputs.aws-region }}
@@ -184,7 +190,7 @@ runs:
 
   - name: Delete ECR Repository
     id: delete_ecr      
-    if: ${{ (inputs.ui-repo-name == '') && (steps.branch-validation.conclusion == 'success') }}
+    if: (inputs.ui-repo-name == '') && (steps.branch-validation.conclusion == 'success')
     env:
       AWS_ACCOUNT_ID: ${{ inputs.aws-account-id }}
       AWS_REGION: ${{ inputs.aws-region }}
@@ -200,7 +206,7 @@ runs:
     shell: bash
 
   - name: Delete Branch Database    
-    if: ${{ (inputs.ui-repo-name == '') && (inputs.delete-branch-db == 'true') && (steps.branch-validation.conclusion == 'success') }}
+    if: (inputs.ui-repo-name == '') && (inputs.delete-branch-db == 'true') && (steps.branch-validation.conclusion == 'success')
     env:
       BRANCH_NAME: ${{ steps.extract_branch.outputs.branch }}
     run: |
