@@ -127,8 +127,7 @@ runs:
   - name: Remove Branched S3 Objects
     if: inputs.ui-repo-name != ''
     run: |
-      base_url="dev-static.patriotsoftware.com"
-      app_endpoint=$(echo '${{ inputs.ui-repo-name }}/${{ steps.extract_branch.outputs.clean-branch }}')"
+      app_endpoint=$(echo '${{ inputs.ui-repo-name }}/${{ steps.extract_branch.outputs.clean-branch }}')
       echo "aws s3 rm s3://ps-static-dev/$app_endpoint --recursive"
     shell: bash
 
