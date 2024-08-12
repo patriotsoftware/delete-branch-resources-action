@@ -130,6 +130,8 @@ runs:
       app_endpoint=$(echo '${{ inputs.ui-repo-name }}/${{ steps.extract_branch.outputs.clean-branch }}')
       echo "aws s3 rm s3://ps-static-dev/$app_endpoint --recursive"
       aws s3 rm s3://ps-static-dev/$app_endpoint --recursive
+      echo "done"
+      exit 0
     shell: bash
 
   - name: Uninstall Helm using default release name
