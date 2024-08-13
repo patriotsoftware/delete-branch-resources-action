@@ -129,14 +129,15 @@ runs:
     run: |
       app_endpoint=$(echo '${{ inputs.ui-repo-name }}/${{ steps.extract_branch.outputs.clean-branch }}')
       echo "aws s3 rm s3://ps-static-dev/$app_endpoint --recursive"
-      aws s3 rm s3://ps-static-dev/$app_endpoint --recursive
-      echo "done"
-      exit 0
+      aws s3 rm s3://ps-static-dev/$app_endpoint --recursive     
     shell: bash
 
   - name: Uninstall Helm using default release name
     id: uninstall_default_helm
-    if: (steps.release-name.outputs.use-default == 'true') && (steps.branch-validation.conclusion == 'success')      
+    if: |
+      (inputs.ui-repo-name == '') &&
+      (steps.release-name.outputs.use-default == 'true') && 
+      (steps.branch-validation.conclusion == 'success')      
     env:
       NAMESPACE: ${{ inputs.namespace }}    
     run: |
@@ -148,7 +149,10 @@ runs:
 
   - name: Uninstall Helm using release names
     id: uninstall_helm_releases
-    if: (steps.release-name.outputs.use-default == 'false') && (steps.branch-validation.conclusion == 'success')
+    if: |
+      (inputs.ui-repo-name == '') &&
+      (steps.release-name.outputs.use-default == 'false') && 
+      (steps.branch-validation.conclusion == 'success')
     env:
       NAMESPACE: ${{ inputs.namespace }}    
     run: |
@@ -164,7 +168,7 @@ runs:
 
   - name: Delete CDK Stacks
     id: delete_cdk
-    if: steps.branch-validation.conclusion == 'success'
+    if: (inputs.ui-repo-name == '') && (steps.branch-validation.conclusion == 'success')
     env:
       AWS_ACCOUNT_ID: ${{ inputs.aws-account-id }}
       AWS_REGION: ${{ inputs.aws-region }}
@@ -186,7 +190,7 @@ runs:
 
   - name: Delete ECR Repository
     id: delete_ecr      
-    if: steps.branch-validation.conclusion == 'success'
+    if: (inputs.ui-repo-name == '') && (steps.branch-validation.conclusion == 'success')
     env:
       AWS_ACCOUNT_ID: ${{ inputs.aws-account-id }}
       AWS_REGION: ${{ inputs.aws-region }}
@@ -202,7 +206,7 @@ runs:
     shell: bash
 
   - name: Delete Branch Database    
-    if: (inputs.delete-branch-db == 'true') && (steps.branch-validation.conclusion == 'success')
+    if: (inputs.ui-repo-name == '') && (inputs.delete-branch-db == 'true') && (steps.branch-validation.conclusion == 'success')
     env:
       BRANCH_NAME: ${{ steps.extract_branch.outputs.branch }}
     run: |
