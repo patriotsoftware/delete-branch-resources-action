@@ -136,10 +136,7 @@ runs:
 
   - name: Uninstall Helm using default release name
     id: uninstall_default_helm
-    if: |
-      (inputs.ui-repo-name == '') &&
-      (steps.release-name.outputs.use-default == 'true') && 
-      (steps.branch-validation.conclusion == 'success')      
+    if: (steps.release-name.outputs.use-default == 'true') && (steps.branch-validation.conclusion == 'success')      
     env:
       NAMESPACE: ${{ inputs.namespace }}    
     run: |
@@ -151,10 +148,7 @@ runs:
 
   - name: Uninstall Helm using release names
     id: uninstall_helm_releases
-    if: |
-      (inputs.ui-repo-name == '') &&
-      (steps.release-name.outputs.use-default == 'false') && 
-      (steps.branch-validation.conclusion == 'success')
+    if: (steps.release-name.outputs.use-default == 'false') && (steps.branch-validation.conclusion == 'success')
     env:
       NAMESPACE: ${{ inputs.namespace }}    
     run: |
@@ -170,7 +164,7 @@ runs:
 
   - name: Delete CDK Stacks
     id: delete_cdk
-    if: (inputs.ui-repo-name == '') && (steps.branch-validation.conclusion == 'success')
+    if: steps.branch-validation.conclusion == 'success'
     env:
       AWS_ACCOUNT_ID: ${{ inputs.aws-account-id }}
       AWS_REGION: ${{ inputs.aws-region }}
@@ -192,7 +186,7 @@ runs:
 
   - name: Delete ECR Repository
     id: delete_ecr      
-    if: (inputs.ui-repo-name == '') && (steps.branch-validation.conclusion == 'success')
+    if: steps.branch-validation.conclusion == 'success'
     env:
       AWS_ACCOUNT_ID: ${{ inputs.aws-account-id }}
       AWS_REGION: ${{ inputs.aws-region }}
@@ -208,7 +202,7 @@ runs:
     shell: bash
 
   - name: Delete Branch Database    
-    if: (inputs.ui-repo-name == '') && (inputs.delete-branch-db == 'true') && (steps.branch-validation.conclusion == 'success')
+    if: (inputs.delete-branch-db == 'true') && (steps.branch-validation.conclusion == 'success')
     env:
       BRANCH_NAME: ${{ steps.extract_branch.outputs.branch }}
     run: |
