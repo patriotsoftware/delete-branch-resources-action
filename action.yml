@@ -167,7 +167,7 @@ runs:
     shell: bash
     
   - name: Delete CDK Stacks (propercase branch)
-    id: delete_cdk
+    id: delete_cdk_propercase
     if: (inputs.ui-repo-name == '') && (steps.branch-validation.conclusion == 'success')
     env:
       AWS_ACCOUNT_ID: ${{ inputs.aws-account-id }}
@@ -189,7 +189,7 @@ runs:
     shell: bash
 
   - name: Delete CDK Stacks (lowercase branch)
-    id: delete_cdk
+    id: delete_cdk_lowercase
     if: (inputs.ui-repo-name == '') && (steps.branch-validation.conclusion == 'success')
     env:
       AWS_ACCOUNT_ID: ${{ inputs.aws-account-id }}
