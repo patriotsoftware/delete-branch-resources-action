@@ -194,7 +194,7 @@ runs:
     env:
       AWS_ACCOUNT_ID: ${{ inputs.aws-account-id }}
       AWS_REGION: ${{ inputs.aws-region }}
-      BRANCH_NAME: ${{ steps.extract_branch.outputs.clean }}
+      BRANCH_NAME: ${{ steps.extract_branch.outputs.clean-branch }}
       STACK_NAME: ${{ inputs.stack-name }}    
     continue-on-error: true
     run: |
