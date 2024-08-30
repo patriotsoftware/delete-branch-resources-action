@@ -165,15 +165,14 @@ runs:
         helm uninstall -n ${NAMESPACE} $release_name || exit_code=$?          
       done
     shell: bash
-
-  - name: Delete CDK Stacks
+    
+  - name: Delete CDK Stacks (propercase branch)
     id: delete_cdk
     if: (inputs.ui-repo-name == '') && (steps.branch-validation.conclusion == 'success')
     env:
       AWS_ACCOUNT_ID: ${{ inputs.aws-account-id }}
       AWS_REGION: ${{ inputs.aws-region }}
       BRANCH_NAME: ${{ steps.extract_branch.outputs.branch }}
-      BRANCH_LOWER: ${{ steps.extract_branch.outputs.clean }}
       STACK_NAME: ${{ inputs.stack-name }}    
     continue-on-error: true
     run: |
@@ -184,9 +183,30 @@ runs:
         echo "destroy all stacks"
         cdk destroy --all -f
       else
-        echo "destroy only $STACK_NAME-$BRANCH_NAME OR $STACK_NAME-$BRANCH_NAME_LOWER"
+        echo "destroy only $STACK_NAME-$BRANCH_NAME"
         cdk destroy $STACK_NAME-$BRANCH_NAME -e -f
-        cdk destroy $STACK_NAME-$BRANCH_NAME_LOWER -e -f
+      fi
+    shell: bash
+
+  - name: Delete CDK Stacks (lowercase branch)
+    id: delete_cdk
+    if: (inputs.ui-repo-name == '') && (steps.branch-validation.conclusion == 'success')
+    env:
+      AWS_ACCOUNT_ID: ${{ inputs.aws-account-id }}
+      AWS_REGION: ${{ inputs.aws-region }}
+      BRANCH_NAME: ${{ steps.extract_branch.outputs.clean }}
+      STACK_NAME: ${{ inputs.stack-name }}    
+    continue-on-error: true
+    run: |
+      echo "Delete CDK Stacks: $BRANCH_NAME"
+      cd ${{ inputs.cdk-folder }}
+      if [[ "${{ inputs.stack-name }}" == "" ]];
+      then
+        echo "destroy all stacks"
+        cdk destroy --all -f
+      else
+        echo "destroy only $STACK_NAME-$BRANCH_NAME"
+        cdk destroy $STACK_NAME-$BRANCH_NAME -e -f
       fi
     shell: bash
 
