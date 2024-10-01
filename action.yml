@@ -60,7 +60,7 @@ runs:
       
       branch=$(echo "$UNESCAPED_BRANCH_NAME" | sed "s%refs\/heads\/%%g")
       cdk_branch=$(echo "$branch" | sed "s/_//g" | cut -c -38)
-      clean_branch=$(echo "$cdk_branch" tr "[:upper:]" "[:lower:]" )
+      clean_branch=$(echo "$cdk_branch" | tr "[:upper:]" "[:lower:]" )
 
       echo "branch=$branch" >> $GITHUB_OUTPUT
       echo "cdk-branch=$cdk_branch" >> $GITHUB_OUTPUT
