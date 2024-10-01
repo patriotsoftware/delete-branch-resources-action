@@ -59,9 +59,11 @@ runs:
       export UNESCAPED_BRANCH_NAME=${{ inputs.branch-name }}
       
       branch=$(echo "$UNESCAPED_BRANCH_NAME" | sed "s%refs\/heads\/%%g")
-      clean_branch=$(echo "$branch" | sed "s/_//g" | tr "[:upper:]" "[:lower:]" | cut -c -38)
+      cdk_branch=$(echo "$branch" | sed "s/_//g" | cut -c -38)
+      clean_branch=$(echo "$cdk_branch" | tr "[:upper:]" "[:lower:]" )
 
       echo "branch=$branch" >> $GITHUB_OUTPUT
+      echo "cdk-branch=$cdk_branch" >> $GITHUB_OUTPUT
       echo "clean-branch=$clean_branch" >> $GITHUB_OUTPUT
       
       # The CDK needs the original unaltered branch name.
@@ -188,13 +190,13 @@ runs:
       fi
     shell: bash
 
-  - name: Delete CDK Stacks (lowercase branch)
+  - name: Delete CDK Stacks (without underscores branch)
     id: delete_cdk_lowercase
     if: (inputs.ui-repo-name == '') && (steps.branch-validation.conclusion == 'success')
     env:
       AWS_ACCOUNT_ID: ${{ inputs.aws-account-id }}
       AWS_REGION: ${{ inputs.aws-region }}
-      BRANCH_NAME: ${{ steps.extract_branch.outputs.clean-branch }}
+      BRANCH_NAME: ${{ steps.extract_branch.outputs.cdk-branch }}
       STACK_NAME: ${{ inputs.stack-name }}    
     continue-on-error: true
     run: |
