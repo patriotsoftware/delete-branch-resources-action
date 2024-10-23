@@ -46,9 +46,13 @@ inputs:
     required: false
     default: 'deploy'
   stack-name:
-    description: 'Delete only specified CDk Stack.'
+    description: 'Delete only specified CDK Stack.'
     required: false
     default: ''
+  database-cluster:
+    description: 'Cluster to create the branch database on (Service/Main)'
+    required: false
+    default: 'Service'
 
 runs:
   using: 'composite'
@@ -234,6 +238,11 @@ runs:
     env:
       BRANCH_NAME: ${{ steps.extract_branch.outputs.branch }}
     run: |
-      echo "Deleting branch database $BRANCH_NAME..."
-      ${{ github.action_path }}/data/delete_branch_database.sh BuildUserDatabaseConnectionSettings $BRANCH_NAME || true
+      SECRET_ID="BuildUserDatabaseConnectionSettings"
+      if [ ${{ inputs.database-cluster }} = "Service" ];  then 
+        SECRET_ID="ServiceBuildUserDatabaseConnectionSettings"
+      fi
+      
+      echo "Deleting branch database $BRANCH_NAME on ${{ inputs.database-cluster }}..."
+      ${{ github.action_path }}/data/delete_branch_database.sh $SECRET_ID $BRANCH_NAME || true
     shell: bash

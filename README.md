@@ -41,6 +41,9 @@ CDK folder path. Default is deploy.
 #### 'stack-name'
 Optional. Specify a CDK stack name that will be used to only delete that stack.
 
+#### 'database-cluster' (optional)
+Optional. Database cluster used (Main/Service). Default is 'Service'.
+
 ## Sample Use
 
 from GitHub delete branch action
