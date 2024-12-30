@@ -74,11 +74,14 @@ runs:
     shell: bash
 
   - name: Versioned Branch Alert
-    if: startsWith(inputs.branch-name, 'v[0-9]+')
     run: |
-      echo "** Versioned Branch Alert ** (no action)"
-      exit 1
+      if [[ "${{ inputs.branch-name }}" =~ ^v[0-9]+ ]]; then
+        echo "** Versioned Branch Alert ** (no action)"
+        exit 1
+      fi      
     shell: bash
+
+  # if [[ "${{ github.event.inputs.yourname }}" =~ ^z[0-9]+ ]]; then
       
   # - name: Branch Validation
   #   id: branch-validation    
