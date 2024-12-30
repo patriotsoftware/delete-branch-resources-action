@@ -42,5 +42,5 @@ jobs:
 
       - name: Print Status
         run: |
-          echo output from action '${{ steps.test-versioned-branch-good.conclusion }}'
-          echo output from action '${{ steps.test-versioned-branch-other.conclusion }}'
+          echo output from action '${{ steps.test-versioned-branch-good.outcome }}'
+          echo output from action '${{ steps.test-versioned-branch-other.outcome }}'
