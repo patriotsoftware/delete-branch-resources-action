@@ -73,11 +73,12 @@ runs:
       # The CDK needs the original unaltered branch name.
     shell: bash
 
-  - name: Versioned Branch Alert
-    if: startsWith(inputs.branch-name, 'v')
+  - name: Versioned Branch Check
     run: |
-      echo "** Versioned Branch Alert ** (no action)"
-      exit 1
+      if [[ "${{ inputs.branch-name }}" =~ ^v[0-9]+ ]]; then
+        echo "** Versioned Branch Alert ** (no action)"
+        exit 1
+      fi      
     shell: bash
       
   - name: Branch Validation
