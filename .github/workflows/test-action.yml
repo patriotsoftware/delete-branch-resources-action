@@ -28,6 +28,7 @@ jobs:
 
       - name: Test vuln branch test
         id: test-versioned-branch-other
+        if: success() || failure()
         uses: patriotsoftware/delete-branch-resources-action@DVO-5572
         with:
             branch-name: vuln
