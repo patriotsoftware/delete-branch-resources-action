@@ -81,169 +81,169 @@ runs:
       fi      
     shell: bash
       
-  # - name: Branch Validation
-  #   id: branch-validation    
-  #   run: |
-  #     branch_name=${{ steps.extract_branch.outputs.branch }}
-  #     if [[ ("$branch_name" == "main") || ("$branch_name" == "master") || ("$branch_name" == "_InitialSolutionRename") ]];
-  #     then
-  #       echo "Validation failed. BRANCH=$branch_name resources cannot be deleted."
-  #       exit 1
-  #     fi
-  #   shell: bash
+  - name: Branch Validation
+    id: branch-validation    
+    run: |
+      branch_name=${{ steps.extract_branch.outputs.branch }}
+      if [[ ("$branch_name" == "main") || ("$branch_name" == "master") || ("$branch_name" == "_InitialSolutionRename") ]];
+      then
+        echo "Validation failed. BRANCH=$branch_name resources cannot be deleted."
+        exit 1
+      fi
+    shell: bash
      
-  # - name: Branch Outputs
-  #   run: |
-  #     echo ${{ steps.extract_branch.outputs.clean-branch }}
-  #     echo ${{ steps.extract_branch.outputs.branch }}
-  #   shell: bash
+  - name: Branch Outputs
+    run: |
+      echo ${{ steps.extract_branch.outputs.clean-branch }}
+      echo ${{ steps.extract_branch.outputs.branch }}
+    shell: bash
 
-  # - name: Release names check
-  #   id: release-name    
-  #   run: |
-  #     array=${{ inputs.release-names-array }}
-  #     if [[ ${array[@]} ]];
-  #     then
-  #       echo "Using release names array"
-  #       echo "use-default=false" >> $GITHUB_OUTPUT
-  #     else
-  #       echo "Using default release name"
-  #       echo "use-default=true" >> $GITHUB_OUTPUT
-  #     fi
-  #   shell: bash
+  - name: Release names check
+    id: release-name    
+    run: |
+      array=${{ inputs.release-names-array }}
+      if [[ ${array[@]} ]];
+      then
+        echo "Using release names array"
+        echo "use-default=false" >> $GITHUB_OUTPUT
+      else
+        echo "Using default release name"
+        echo "use-default=true" >> $GITHUB_OUTPUT
+      fi
+    shell: bash
 
-  # - name: Custom Recursive Code Checkout
-  #   if: inputs.recursive-custom-token != ''
-  #   uses: actions/checkout@v4
-  #   with:
-  #     token: ${{ inputs.recursive-custom-token }}
-  #     submodules: recursive
+  - name: Custom Recursive Code Checkout
+    if: inputs.recursive-custom-token != ''
+    uses: actions/checkout@v4
+    with:
+      token: ${{ inputs.recursive-custom-token }}
+      submodules: recursive
 
-  # - name: Code Checkout
-  #   if: inputs.recursive-custom-token == ''
-  #   uses: actions/checkout@v4
+  - name: Code Checkout
+    if: inputs.recursive-custom-token == ''
+    uses: actions/checkout@v4
 
-  # - name: Authenticate with DEV
-  #   id: authenticate_dev
-  #   uses: aws-actions/configure-aws-credentials@v4
-  #   with:
-  #     aws-access-key-id: ${{ inputs.aws-access-key-id }}
-  #     aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
-  #     aws-region: ${{ inputs.aws-region }}
+  - name: Authenticate with DEV
+    id: authenticate_dev
+    uses: aws-actions/configure-aws-credentials@v4
+    with:
+      aws-access-key-id: ${{ inputs.aws-access-key-id }}
+      aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
+      aws-region: ${{ inputs.aws-region }}
 
-  # - name: Remove Branched S3 Objects
-  #   if: inputs.ui-repo-name != ''
-  #   run: |
-  #     app_endpoint=$(echo '${{ inputs.ui-repo-name }}/${{ steps.extract_branch.outputs.clean-branch }}')
-  #     echo "aws s3 rm s3://ps-static-dev/$app_endpoint --recursive"
-  #     aws s3 rm s3://ps-static-dev/$app_endpoint --recursive     
-  #   shell: bash
+  - name: Remove Branched S3 Objects
+    if: inputs.ui-repo-name != ''
+    run: |
+      app_endpoint=$(echo '${{ inputs.ui-repo-name }}/${{ steps.extract_branch.outputs.clean-branch }}')
+      echo "aws s3 rm s3://ps-static-dev/$app_endpoint --recursive"
+      aws s3 rm s3://ps-static-dev/$app_endpoint --recursive     
+    shell: bash
 
-  # - name: Uninstall Helm using default release name
-  #   id: uninstall_default_helm
-  #   if: |
-  #     (inputs.ui-repo-name == '') &&
-  #     (steps.release-name.outputs.use-default == 'true') && 
-  #     (steps.branch-validation.conclusion == 'success')      
-  #   env:
-  #     NAMESPACE: ${{ inputs.namespace }}    
-  #   run: |
-  #     echo "Uninstall Helm using default release name"
-  #     release_name=${NAMESPACE}-${{ steps.extract_branch.outputs.clean-branch }}
-  #     echo "$release_name -n ${NAMESPACE}"
-  #     helm uninstall -n ${NAMESPACE} $release_name || exit_code=$?
-  #   shell: bash 
+  - name: Uninstall Helm using default release name
+    id: uninstall_default_helm
+    if: |
+      (inputs.ui-repo-name == '') &&
+      (steps.release-name.outputs.use-default == 'true') && 
+      (steps.branch-validation.conclusion == 'success')      
+    env:
+      NAMESPACE: ${{ inputs.namespace }}    
+    run: |
+      echo "Uninstall Helm using default release name"
+      release_name=${NAMESPACE}-${{ steps.extract_branch.outputs.clean-branch }}
+      echo "$release_name -n ${NAMESPACE}"
+      helm uninstall -n ${NAMESPACE} $release_name || exit_code=$?
+    shell: bash 
 
-  # - name: Uninstall Helm using release names
-  #   id: uninstall_helm_releases
-  #   if: |
-  #     (inputs.ui-repo-name == '') &&
-  #     (steps.release-name.outputs.use-default == 'false') && 
-  #     (steps.branch-validation.conclusion == 'success')
-  #   env:
-  #     NAMESPACE: ${{ inputs.namespace }}    
-  #   run: |
-  #     echo "Uninstall Helm using release names"
-  #     release_names=${{ inputs.release-names-array }}
-  #     for r in ${release_names[@]};
-  #     do
-  #       release_name=$r-${{ steps.extract_branch.outputs.clean-branch }}
-  #       echo "$release_name -n ${NAMESPACE}"
-  #       helm uninstall -n ${NAMESPACE} $release_name || exit_code=$?          
-  #     done
-  #   shell: bash
+  - name: Uninstall Helm using release names
+    id: uninstall_helm_releases
+    if: |
+      (inputs.ui-repo-name == '') &&
+      (steps.release-name.outputs.use-default == 'false') && 
+      (steps.branch-validation.conclusion == 'success')
+    env:
+      NAMESPACE: ${{ inputs.namespace }}    
+    run: |
+      echo "Uninstall Helm using release names"
+      release_names=${{ inputs.release-names-array }}
+      for r in ${release_names[@]};
+      do
+        release_name=$r-${{ steps.extract_branch.outputs.clean-branch }}
+        echo "$release_name -n ${NAMESPACE}"
+        helm uninstall -n ${NAMESPACE} $release_name || exit_code=$?          
+      done
+    shell: bash
     
-  # - name: Delete CDK Stacks (propercase branch)
-  #   id: delete_cdk_propercase
-  #   if: (inputs.ui-repo-name == '') && (steps.branch-validation.conclusion == 'success')
-  #   env:
-  #     AWS_ACCOUNT_ID: ${{ inputs.aws-account-id }}
-  #     AWS_REGION: ${{ inputs.aws-region }}
-  #     BRANCH_NAME: ${{ steps.extract_branch.outputs.branch }}
-  #     STACK_NAME: ${{ inputs.stack-name }}    
-  #   continue-on-error: true
-  #   run: |
-  #     echo "Delete CDK Stacks: $BRANCH_NAME"
-  #     cd ${{ inputs.cdk-folder }}
-  #     if [[ "${{ inputs.stack-name }}" == "" ]];
-  #     then
-  #       echo "destroy all stacks"
-  #       cdk destroy --all -f
-  #     else
-  #       echo "destroy only $STACK_NAME-$BRANCH_NAME"
-  #       cdk destroy $STACK_NAME-$BRANCH_NAME -e -f
-  #     fi
-  #   shell: bash
+  - name: Delete CDK Stacks (propercase branch)
+    id: delete_cdk_propercase
+    if: (inputs.ui-repo-name == '') && (steps.branch-validation.conclusion == 'success')
+    env:
+      AWS_ACCOUNT_ID: ${{ inputs.aws-account-id }}
+      AWS_REGION: ${{ inputs.aws-region }}
+      BRANCH_NAME: ${{ steps.extract_branch.outputs.branch }}
+      STACK_NAME: ${{ inputs.stack-name }}    
+    continue-on-error: true
+    run: |
+      echo "Delete CDK Stacks: $BRANCH_NAME"
+      cd ${{ inputs.cdk-folder }}
+      if [[ "${{ inputs.stack-name }}" == "" ]];
+      then
+        echo "destroy all stacks"
+        cdk destroy --all -f
+      else
+        echo "destroy only $STACK_NAME-$BRANCH_NAME"
+        cdk destroy $STACK_NAME-$BRANCH_NAME -e -f
+      fi
+    shell: bash
 
-  # - name: Delete CDK Stacks (without underscores branch)
-  #   id: delete_cdk_lowercase
-  #   if: (inputs.ui-repo-name == '') && (steps.branch-validation.conclusion == 'success')
-  #   env:
-  #     AWS_ACCOUNT_ID: ${{ inputs.aws-account-id }}
-  #     AWS_REGION: ${{ inputs.aws-region }}
-  #     BRANCH_NAME: ${{ steps.extract_branch.outputs.cdk-branch }}
-  #     STACK_NAME: ${{ inputs.stack-name }}    
-  #   continue-on-error: true
-  #   run: |
-  #     echo "Delete CDK Stacks: $BRANCH_NAME"
-  #     cd ${{ inputs.cdk-folder }}
-  #     if [[ "${{ inputs.stack-name }}" == "" ]];
-  #     then
-  #       echo "destroy all stacks"
-  #       cdk destroy --all -f
-  #     else
-  #       echo "destroy only $STACK_NAME-$BRANCH_NAME"
-  #       cdk destroy $STACK_NAME-$BRANCH_NAME -e -f
-  #     fi
-  #   shell: bash
+  - name: Delete CDK Stacks (without underscores branch)
+    id: delete_cdk_lowercase
+    if: (inputs.ui-repo-name == '') && (steps.branch-validation.conclusion == 'success')
+    env:
+      AWS_ACCOUNT_ID: ${{ inputs.aws-account-id }}
+      AWS_REGION: ${{ inputs.aws-region }}
+      BRANCH_NAME: ${{ steps.extract_branch.outputs.cdk-branch }}
+      STACK_NAME: ${{ inputs.stack-name }}    
+    continue-on-error: true
+    run: |
+      echo "Delete CDK Stacks: $BRANCH_NAME"
+      cd ${{ inputs.cdk-folder }}
+      if [[ "${{ inputs.stack-name }}" == "" ]];
+      then
+        echo "destroy all stacks"
+        cdk destroy --all -f
+      else
+        echo "destroy only $STACK_NAME-$BRANCH_NAME"
+        cdk destroy $STACK_NAME-$BRANCH_NAME -e -f
+      fi
+    shell: bash
 
-  # - name: Delete ECR Repository
-  #   id: delete_ecr      
-  #   if: (inputs.ui-repo-name == '') && (steps.branch-validation.conclusion == 'success')
-  #   env:
-  #     AWS_ACCOUNT_ID: ${{ inputs.aws-account-id }}
-  #     AWS_REGION: ${{ inputs.aws-region }}
-  #     REPOSITORY_NAME: ${{ inputs.namespace }}/${{ steps.extract_branch.outputs.clean-branch }}    
-  #   run: |
-  #     if aws ecr describe-repositories --repository-names "$REPOSITORY_NAME" --region "$AWS_REGION" >/dev/null 2>&1; then
-  #       echo "ECR Repository exists. Proceeding with delete."
-  #       echo "aws ecr delete-repository --repository-name ${REPOSITORY_NAME} --force " 
-  #       aws ecr delete-repository --repository-name "${REPOSITORY_NAME}" --force 
-  #     else
-  #       echo "ECR Repository does not exist. No action taken."
-  #     fi
-  #   shell: bash
+  - name: Delete ECR Repository
+    id: delete_ecr      
+    if: (inputs.ui-repo-name == '') && (steps.branch-validation.conclusion == 'success')
+    env:
+      AWS_ACCOUNT_ID: ${{ inputs.aws-account-id }}
+      AWS_REGION: ${{ inputs.aws-region }}
+      REPOSITORY_NAME: ${{ inputs.namespace }}/${{ steps.extract_branch.outputs.clean-branch }}    
+    run: |
+      if aws ecr describe-repositories --repository-names "$REPOSITORY_NAME" --region "$AWS_REGION" >/dev/null 2>&1; then
+        echo "ECR Repository exists. Proceeding with delete."
+        echo "aws ecr delete-repository --repository-name ${REPOSITORY_NAME} --force " 
+        aws ecr delete-repository --repository-name "${REPOSITORY_NAME}" --force 
+      else
+        echo "ECR Repository does not exist. No action taken."
+      fi
+    shell: bash
 
-  # - name: Delete Branch Database    
-  #   if: (inputs.ui-repo-name == '') && (inputs.delete-branch-db == 'true') && (steps.branch-validation.conclusion == 'success')
-  #   env:
-  #     BRANCH_NAME: ${{ steps.extract_branch.outputs.branch }}
-  #   run: |
-  #     SECRET_ID="BuildUserDatabaseConnectionSettings"
-  #     if [ ${{ inputs.database-cluster }} = "Service" ];  then 
-  #       SECRET_ID="ServiceBuildUserDatabaseConnectionSettings"
-  #     fi
+  - name: Delete Branch Database    
+    if: (inputs.ui-repo-name == '') && (inputs.delete-branch-db == 'true') && (steps.branch-validation.conclusion == 'success')
+    env:
+      BRANCH_NAME: ${{ steps.extract_branch.outputs.branch }}
+    run: |
+      SECRET_ID="BuildUserDatabaseConnectionSettings"
+      if [ ${{ inputs.database-cluster }} = "Service" ];  then 
+        SECRET_ID="ServiceBuildUserDatabaseConnectionSettings"
+      fi
       
-  #     echo "Deleting branch database $BRANCH_NAME on ${{ inputs.database-cluster }}..."
-  #     ${{ github.action_path }}/data/delete_branch_database.sh $SECRET_ID $BRANCH_NAME || true
-  #   shell: bash
+      echo "Deleting branch database $BRANCH_NAME on ${{ inputs.database-cluster }}..."
+      ${{ github.action_path }}/data/delete_branch_database.sh $SECRET_ID $BRANCH_NAME || true
+    shell: bash
