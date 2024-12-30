@@ -40,6 +40,7 @@ jobs:
             aws-secret-access-key: unknown
 
       - name: Print Status
+        if: success() || failure()
         run: |
           echo output from action '${{ steps.test-versioned-branch-good.outputs.validate-output }}'
           echo output from action '${{ steps.test-versioned-branch-other.outputs.validate-output }}'
