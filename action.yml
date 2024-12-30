@@ -74,7 +74,7 @@ runs:
     shell: bash
 
   - name: Versioned Branch Alert
-    if: inputs.branch-name =~ '^v[0-9]+'
+    if: inputs.branch-name == 'v[0-9]+'
     run: |
       echo "** Versioned Branch Alert ** (no action)"
       exit 1   
